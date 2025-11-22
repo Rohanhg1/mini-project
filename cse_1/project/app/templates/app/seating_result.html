@@ -1,0 +1,101 @@
+{% load custom_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Seating Arrangement Result</title>
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #f9fafc;
+            padding: 20px;
+            color: #222;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        table {
+            width: 80%;
+            margin: 0 auto 30px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+        a:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h2>Seating Arrangement Result</h2>
+
+    {% if arrangement %}
+        {% for room, benches in arrangement %}
+            <h3>Room {{ room }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Bench</th>
+                    {% for i in students_per_bench|make_list %}
+                        <th>Student {{ forloop.counter }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for bench, students in benches %}
+                    <tr>
+                        <td>{{ bench }}</td>
+                        {% for student in students %}
+                            <td>
+                                {% if student %}
+                                    {% with student_parts=student|split_once %}
+                                        {{ student_parts.0 }}<br>{{ student_parts.1|default:"" }}
+                                    {% endwith %}
+                                {% else %}
+                                    Empty
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+    {% else %}
+        <p style="text-align:center;">No seating data available. Please generate again.</p>
+    {% endif %}
+
+    <div style="text-align:center;">
+        <a href="{% url 'download_seating_pdf' %}">📄 Download Seating Arrangement PDF</a>
+        <a href="{% url 'seating' %}">⬅ Generate Again</a>
+        <a href="{% url 'choice' %}">⬅ Back to Choice</a>
+    </div>
+</body>
+</html>

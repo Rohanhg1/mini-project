@@ -1,0 +1,61 @@
+#########################
+# Python / Django basics
+#########################
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments (BIG – must be ignored)
+env/
+venv/
+.venv/
+.env/
+
+#########################
+# Django project files
+#########################
+
+# Local DB
+db.sqlite3
+*.sqlite3
+
+# Collected static & media uploads
+staticfiles/
+static_root/
+collected_static/
+media/
+
+# Logs
+*.log
+
+#########################
+# Test / build artifacts
+#########################
+htmlcov/
+.tox/
+.coverage*
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+#########################
+# IDE / OS junk
+#########################
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+#########################
+# Optional: big generated documents
+# (timetables, reports, etc). Keep only
+# the code in git, not the PDFs.
+#########################
+*.pdf
+*.pptx
+*.xlsx

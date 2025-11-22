@@ -1,0 +1,117 @@
+{% load dict_extras %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ teacher_name }}'s Timetable</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .content-center {
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    .year-block {
+      margin-bottom: 30px;
+    }
+    h3 {
+      color: #555;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 5px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    .subject-highlight {
+      background-color: #e9f7ef;
+      font-weight: bold;
+    }
+    .empty-slot {
+      background-color: #f9f9f9;
+      color: #999;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-card">
+    <div class="content-center">
+      <h2>{{ teacher_name }}'s Timetable</h2>
+      <p>Subjects: {{ subjects|join:", " }}</p>
+
+      {% for year, days_dict in timetables.items %}
+        <div class="year-block">
+          <h3>Semester {{ year_labels|get_item:year }}</h3>
+          <table>
+            <tr>
+              <th>Day</th>
+              {% for p, t in periods %}
+                <th>{{ p }}<br><small>{{ t }}</small></th>
+              {% endfor %}
+            </tr>
+            {% for d in days %}
+              <tr>
+                <td>{{ d }}</td>
+                {% for slot in timetables|get_item:year|get_item:d %}
+                  <td class="{% if slot and slot in subjects %}subject-highlight{% elif not slot %}empty-slot{% endif %}">
+                    {% if slot %}{{ slot }}{% else %}-{% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% endfor %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" formaction="{% url 'download_teacher_timetable_pdf' teacher_name=teacher_name %}">Download {{ teacher_name }}'s Timetable PDF</button>
+      </form>
+
+      <p><a href="{% url 'timetable_teachers' %}">Back to Timetable Generation</a></p>
+    </div>
+  </div>
+</body>
+</html>

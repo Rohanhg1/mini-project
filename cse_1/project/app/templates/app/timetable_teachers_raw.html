@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Timetable - Teachers</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #74ABE2, #5563DE, #3C3B6E);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      padding: 30px 40px;
+      margin: 40px auto;
+      width: 90%;
+      max-width: 700px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #FFD700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+
+    p {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #f1f1f1;
+    }
+
+    /* HIDE all teacher forms by default; show only .active ones */
+    .teacher-form {
+      display: none;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+
+    .teacher-form.active {
+      display: block;
+    }
+
+    h3 {
+      color: #FFDD57;
+      margin-top: 0;
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    .inline-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 12px;
+    }
+
+    button {
+      background-color: #FFD700;
+      color: #000;
+      border: none;
+      padding: 10px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto 0;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ffb400;
+      transform: scale(1.05);
+    }
+
+    .dropdown {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    select {
+      padding: 8px 15px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+    }
+
+    .year-block { background: rgba(0,0,0,0.06); padding:10px; border-radius:6px; margin-top:8px; }
+    .small { font-size: 0.9em; color: #eee; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Timetable Generator — Teachers</h2>
+    <p>Select semester type to show the corresponding teacher forms.</p>
+
+    {% if errors %}
+      <div style="background: rgba(255, 0, 0, 0.2); border: 1px solid red; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>Errors:</strong>
+        <ul>
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- IMPORTANT: include enctype and management_form so formset POSTs correctly -->
+    <form method="post" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ formset.management_form }}
+
+      <!-- Semester Selection -->
+      <div class="dropdown">
+        <label for="semType"><strong>Semester Type:</strong></label>
+        <select id="semType">
+          <option value="">-- Select Semester Type --</option>
+          <option value="odd">Odd Semester (3, 5, 7)</option>
+          <option value="even">Even Semester (4, 6, 8)</option>
+        </select>
+      </div>
+
+      <!-- Teacher Forms (render fields explicitly so external_* checkboxes are visible) -->
+      {% for form in formset.forms %}
+        <div class="teacher-form active" id="teacherForm{{ forloop.counter }}">
+          <h3>Teacher {{ forloop.counter }}</h3>
+
+          <label>Teacher name</label>
+          {{ form.teacher_name }}
+
+          <label class="small">Years handling</label>
+          {{ form.years_handling }}
+
+          <div class="year-block">
+            <strong>Year {{ year_labels.1 }}</strong>
+            <label>Subject</label>{{ form.subject_y1 }}
+            <label>Hours</label>{{ form.hours_y1 }}
+            <div class="small">
+              <label class="inline-checkbox">{{ form.integrated_y1 }} <span>Integrated</span></label>
+              <label class="inline-checkbox">{{ form.external_y1 }} <span>External Lab</span></label>
+            </div>
+          </div>
+
+          <div class="year-block">
+            <strong>Year {{ year_labels.2 }}</strong>
+            <label>Subject</label>{{ form.subject_y2 }}
+            <label>Hours</label>{{ form.hours_y2 }}
+            <div class="small">
+              <label class="inline-checkbox">{{ form.integrated_y2 }} <span>Integrated</span></label>
+              <label class="inline-checkbox">{{ form.external_y2 }} <span>External Lab</span></label>
+            </div>
+          </div>
+
+          <div class="year-block">
+            <strong>Year {{ year_labels.3 }}</strong>
+            <label>Subject</label>{{ form.subject_y3 }}
+            <label>Hours</label>{{ form.hours_y3 }}
+            <div class="small">
+              <label class="inline-checkbox">{{ form.integrated_y3 }} <span>Integrated</span></label>
+              <label class="inline-checkbox">{{ form.external_y3 }} <span>External Lab</span></label>
+            </div>
+          </div>
+
+        </div>
+      {% endfor %}
+
+      <button type="submit">Generate</button>
+    </form>
+
+    <!--
+      If you prefer the compact automatic layout, uncomment the alternative block below.
+      It will render each form with form.as_p instead of explicit fields.
+    -->
+    <!--
+    <form method="post" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      {% for form in formset.forms %}
+        <div class="teacher-form">
+          {{ form.as_p }}
+        </div>
+      {% endfor %}
+      <button type="submit">Generate Timetable</button>
+    </form>
+    -->
+
+  </div>
+
+  <script>
+    const semTypeSelect = document.getElementById('semType');
+
+    // mapping teacher forms to visible indices (adjust if your teacher count changes)
+    const semYearMappings = {
+      odd: { mapping: {3:[1,2], 5:[3,4], 7:[5,6,7]} },
+      even: { mapping: {4:[1,2], 6:[3,4], 8:[5,6,7]} },
+    };
+
+    function showFormsForSemester(type) {
+      // Show all teacher forms regardless of semester selection
+      document.querySelectorAll('.teacher-form').forEach(form => form.classList.add('active'));
+    }
+
+    semTypeSelect.addEventListener('change', e => {
+      showFormsForSemester(e.target.value);
+    });
+
+    // Show all forms by default on page load
+    showFormsForSemester();
+  </script>
+</body>
+</html>

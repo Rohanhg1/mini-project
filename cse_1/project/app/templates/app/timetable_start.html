@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timetable - Start</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ABE2, #5563DE, #6C63FF);
+      background-size: 200% 200%;
+      animation: gradientMove 8s ease infinite;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container-card {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 1.8em;
+      color: #fff;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    button {
+      background-color: #00C9A7;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #00B896;
+    }
+
+    a {
+      color: #FFD460;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    a:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-card">
+    <div class="content-center">
+      <h2>Timetable Generator — Step 1</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 20px;">
+          <label for="{{ form.total_teachers.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.total_teachers.label }}</label>
+          {{ form.total_teachers }}
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label for="{{ form.semester_type.id_for_label }}" style="display: block; margin-bottom: 5px; font-weight: bold;">{{ form.semester_type.label }}</label>
+          {{ form.semester_type }}
+        </div>
+        <div class="button-center">
+          <button type="submit">Next → Enter Teachers</button>
+        </div>
+      </form>
+      <p><a href="{% url 'choice' %}">← Back</a></p>
+    </div>
+  </div>
+</body>
+</html>

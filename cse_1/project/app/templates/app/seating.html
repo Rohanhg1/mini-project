@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSE – Seating Arrangement Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #6C63FF, #74ABE2);
+      background-size: 200% 200%;
+      animation: gradientMove 8s ease infinite;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container-card {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+      width: 90%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+    }
+
+    input[type="number"], input[type="file"] {
+      width: 80%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 8px;
+      outline: none;
+      font-size: 1em;
+    }
+
+    .button-center {
+      margin-top: 25px;
+    }
+
+    button {
+      background-color: #00C9A7;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #00B896;
+    }
+
+    a {
+      color: #FFD460;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #fff;
+    }
+
+    .pdf-inputs {
+      margin-top: 15px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-card">
+    <h1>CSE – Seating Arrangement Generator</h1>
+
+    <form method="POST" enctype="multipart/form-data" id="mainForm">
+      {% csrf_token %}
+
+      <!-- Step 1: Enter number of semesters -->
+      <div id="step1">
+        <label for="num_sems">Enter Number of Semesters:</label>
+        <input type="number" id="num_sems" name="num_sems" min="1" required>
+        <div class="button-center">
+          <button type="button" onclick="showPDFInputs()">Next → Upload PDFs</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Upload PDFs + Common Inputs -->
+      <div id="step2" class="hidden">
+        <div id="pdfInputs" class="pdf-inputs"></div>
+
+        <label for="num_classes">Enter Number of Classes per Semester:</label>
+        <input type="number" id="num_classes" name="num_classes" min="1" required>
+
+        <label for="benches_per_class">Enter Total Benches in Each Class:</label>
+        <input type="number" id="benches_per_class" name="benches_per_class" min="1" required>
+
+        <label for="students_per_bench">Enter Total Students per Bench:</label>
+        <input type="number" id="students_per_bench" name="students_per_bench" min="1" required>
+
+        <div class="button-center">
+          <button type="submit">Generate Seating</button>
+        </div>
+      </div>
+    </form>
+
+    <p><a href="{% url 'choice' %}">← Back</a></p>
+  </div>
+
+  <script>
+    function showPDFInputs() {
+      const numSems = parseInt(document.getElementById('num_sems').value);
+      if (!numSems || numSems < 1) {
+        alert("Please enter a valid number of semesters.");
+        return;
+      }
+
+      // Hide step 1 and show step 2
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+
+      // Generate dynamic PDF inputs
+      const pdfContainer = document.getElementById('pdfInputs');
+      pdfContainer.innerHTML = '';
+      for (let i = 1; i <= numSems; i++) {
+        const label = document.createElement('label');
+        label.textContent = `Upload PDF for Semester ${i}:`;
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.name = `pdf_sem_${i}`;
+        input.accept = 'application/pdf';
+        input.required = true;
+
+        pdfContainer.appendChild(label);
+        pdfContainer.appendChild(input);
+      }
+    }
+  </script>
+</body>
+</html>

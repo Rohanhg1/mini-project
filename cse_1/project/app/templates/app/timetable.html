@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timetable Generator</title>
+</head>
+<body>
+    <h2>Generate Timetable</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Generate Timetable</button>
+    </form>
+    <p><a href="{% url 'choice' %}">⬅ Back</a></p>
+</body>
+</html>

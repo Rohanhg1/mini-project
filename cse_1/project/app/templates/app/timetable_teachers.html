@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Timetable - Teachers</title>
+</head>
+<body>
+  <main style="max-width:980px;margin:20px auto;padding:10px;">
+    <h2>Timetable Generator — Teachers</h2>
+    <p>Enter details for each teacher (1..{{ total }}). All fields are editable below.</p>
+    <p id="form-debug" style="background:#222;padding:8px;border-radius:6px;color:#fff;">Rendering {{ formset.forms|length }} forms (TOTAL_FORMS={{ formset.management_form.TOTAL_FORMS.value }})</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% if formset %}{{ formset.management_form }}{% endif %}
+
+      {% for form in formset.forms %}
+        <fieldset class="teacher-block" id="teacher-{{ forloop.counter }}" style="border:2px solid #c33;">
+          <legend>Teacher {{ forloop.counter }}</legend>
+          {{ form.as_p }}
+        </fieldset>
+      {% endfor %}
+
+      <div style="margin-top:12px;">
+        <button type="submit">Generate Timetable</button>
+        <a href="{% url 'timetable_start' %}" style="margin-left:12px;">Back</a>
+      </div>
+    </form>
+  </main>
+  <script>
+    // Defensive: remove any bubble cursor element that might overlay inputs
+    try {
+      document.querySelectorAll('.bubble').forEach(function(el){ el.remove(); });
+      // Ensure inputs accept pointer events
+      document.querySelectorAll('form input, form select, form textarea, form button').forEach(function(el){ el.style.pointerEvents = 'auto'; el.style.zIndex = 2; });
+      // Raise main content above any background decorations
+      var main = document.querySelector('main'); if(main) main.style.zIndex = 1;
+    } catch (e) {
+      console.warn('Defensive UI fix failed', e);
+    }
+    // Debug: count rendered teacher blocks and update debug box & console
+    (function(){
+      try{
+        var blocks = document.querySelectorAll('fieldset.teacher-block');
+        var dbg = document.getElementById('form-debug');
+        if(dbg) dbg.textContent = 'Rendering ' + blocks.length + ' forms (TOTAL_FORMS=' + (document.querySelector('input[name="teachers-TOTAL_FORMS"]') ? document.querySelector('input[name="teachers-TOTAL_FORMS"]').value : 'MISSING') + ')';
+        console.log('Teacher fieldsets on page:', blocks.length);
+        blocks.forEach(function(b,i){ b.style.outline = '2px solid rgba(200,50,50,0.9)'; b.style.marginBottom = '12px'; });
+      } catch(e){ console.warn('Debug count failed', e); }
+    })();
+  </script>
+</body>
+</html>

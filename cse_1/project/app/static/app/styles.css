@@ -1,0 +1,36 @@
+/* Centered card layout, fancy background, bubble cursor support */
+html, body { height: 100%; margin:0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+body {
+  background-image: radial-gradient(circle at 10% 20%, rgba(255,200,200,0.08), transparent 20%),
+                    radial-gradient(circle at 80% 80%, rgba(200,220,255,0.06), transparent 25%),
+                    url('/static/app/bg-abstract.svg');
+  background-size: cover;
+  background-attachment: fixed;
+  background-color: #0b1020;
+  color: #eef;
+  display:flex; align-items:center; justify-content:center;
+}
+.container-card {
+  width: 92%; max-width: 980px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  padding: 30px 36px; border-radius: 14px; box-shadow: 0 10px 30px rgba(3,6,18,0.6);
+  backdrop-filter: blur(6px);
+}
+h2 { text-align:center; margin-top:0; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.6); }
+form { display:flex; flex-direction:column; gap:12px; align-items:center; }
+input[type=text], input[type=password], select, textarea { width: 100%; max-width:560px; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color:#fff; }
+button { padding:10px 18px; border-radius:10px; border:none; background:linear-gradient(90deg,#4a8cff,#6be3ff); color:#042; font-weight:700; cursor:pointer; box-shadow: 0 6px 18px rgba(75,120,255,0.14); }
+.button-center { display:flex; justify-content:center; }
+.room, .teacher-block { background: rgba(255,255,255,0.02); }
+/* Teacher layout: two columns on wide screens, single column on small screens */
+.teacher-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; width:100%; }
+.teacher-block { border:1px solid rgba(255,255,255,0.04); padding:14px; border-radius:10px; }
+/* bubble cursor pointer helper: invisible base cursor, bubble shown by JS */
+.bubble { position: fixed; pointer-events: none; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%, -50%); z-index:9999; mix-blend-mode: screen; transition: width 0.12s ease, height 0.12s ease, opacity 0.12s ease; }
+.bubble { position: fixed; pointer-events: none; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%, -50%); z-index:9999; mix-blend-mode: screen; transition: width 0.12s ease, height 0.12s ease, opacity 0.12s ease; }
+.bubble.small{ width: 14px; height: 14px; }
+
+/* center inline content for seating/timetable cards */
+.content-center { display:flex; flex-direction:column; gap:16px; align-items:center; }
+
+/* responsive tweaks */
+@media (max-width:800px){ .container-card{ padding:20px; } input[type=text]{max-width:100%} }

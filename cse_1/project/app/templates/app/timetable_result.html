@@ -1,0 +1,162 @@
+{% load dict_extras %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Timetable Result</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .content-center {
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    .warning {
+      background-color: #ffe6e6;
+      border: 1px solid #ff9999;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .year-block {
+      margin-bottom: 30px;
+    }
+    h3 {
+      color: #555;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 5px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    .teacher-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .teacher-box {
+      background-color: #e9f7ef;
+      border: 1px solid #27ae60;
+      border-radius: 8px;
+      padding: 10px;
+      min-width: 200px;
+      text-align: center;
+    }
+    .teacher-box h4 {
+      margin: 0 0 5px 0;
+      color: #27ae60;
+    }
+    .teacher-box p {
+      margin: 0;
+      color: #333;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-card">
+    <div class="content-center">
+      <h2>Generated Timetables</h2>
+
+      {% if unallocated %}
+        <div class="warning">
+          <strong>Warning — some hours couldn't be scheduled:</strong>
+          <ul>
+            {% for u in unallocated %}
+              <li>{{ u.teacher }} (Year {{ u.year }}) — {{ u.subject }} — remaining hours: {{ u.remaining }} — integrated: {{ u.is_integrated }} — external lab: {{ u.is_external_lab }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- Teacher Boxes -->
+      <div class="teacher-boxes">
+        {% for teacher, subjects in teacher_subjects.items %}
+          <div class="teacher-box">
+            <h4><a href="{% url 'teacher_timetable' teacher_name=teacher %}" style="color: #27ae60; text-decoration: none;">{{ teacher }}</a></h4>
+            <p>{{ subjects|join:", " }}</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% for year, days_dict in timetables.items %}
+        <div class="year-block">
+          <h3>Semester {{ year_labels|get_item:year }}</h3>
+          <table>
+            <tr>
+              <th>Day</th>
+              {% for p, t in periods %}
+                <th>{{ p }}<br><small>{{ t }}</small></th>
+              {% endfor %}
+            </tr>
+            {% for d in days %}
+              <tr>
+                <td>{{ d }}</td>
+                {% for slot in timetables|get_item:year|get_item:d %}
+                  <td style="{% if slot and ' - Lab' in slot %}background-color: lightblue;{% endif %}">{% if slot %}{{ slot }}{% else %}-{% endif %}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% endfor %}
+
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" formaction="{% url 'download_timetable_pdf' %}">Download Timetable PDF</button>
+      </form>
+
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" name="regenerate" value="regenerate">Generate Again</button>
+      </form>
+
+      <p><a href="{% url 'choice' %}">Back to Dashboard</a></p>
+    </div>
+  </div>
+</body>
+</html>

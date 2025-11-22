@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html>
+<head>
+  
+  <title>Timetable - Teachers</title>
+  <link rel="stylesheet" href="/static/app/styles.css">
+  <script src="/static/app/bubble-cursor.js" defer></script>
+</head>
+<body>
+  <div class="container-card">
+    <div class="content-center">
+      <h2>Timetable Generator — Step 2</h2>
+      <p>Fill details for each teacher. Only fill subject/hours/lab for the years they handle.</p>
+
+      <form method="post">
+        <input type="hidden" name="csrfmiddlewaretoken" value="xwFGsKMUKkcBRPcBS3Zhu120lxrnVkrbvKBwYe3LVVouL8suyafpYiW2o0tGPBUe">
+        
+          <input type="hidden" name="teachers-TOTAL_FORMS" value="7" id="id_teachers-TOTAL_FORMS"><input type="hidden" name="teachers-INITIAL_FORMS" value="7" id="id_teachers-INITIAL_FORMS"><input type="hidden" name="teachers-MIN_NUM_FORMS" value="0" id="id_teachers-MIN_NUM_FORMS"><input type="hidden" name="teachers-MAX_NUM_FORMS" value="7" id="id_teachers-MAX_NUM_FORMS">
+        
+        <div class="teacher-grid">
+        {# Prefer a pre-built indexed list (forms_list) from the view, but fall
+           back to iterating the raw formset if it's not available. This guards
+           against template/view mismatches and ensures Teacher 1..N appear.
+        #}
+        
+          
+            <div id="teacher-1" class="teacher-block">
+              <h4>Teacher 1</h4>
+              <p>
+    <label for="id_teachers-0-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-0-teacher_name" id="id_teachers-0-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-0-years_handling"><div>
+    <label for="id_teachers-0-years_handling_0"><input type="checkbox" name="teachers-0-years_handling" value="1" id="id_teachers-0-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-0-years_handling_1"><input type="checkbox" name="teachers-0-years_handling" value="2" id="id_teachers-0-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-0-years_handling_2"><input type="checkbox" name="teachers-0-years_handling" value="3" id="id_teachers-0-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-0-subject_y1" id="id_teachers-0-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-0-hours_y1" min="0" id="id_teachers-0-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-0-lab_y1" id="id_teachers-0-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-0-subject_y2" id="id_teachers-0-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-0-hours_y2" min="0" id="id_teachers-0-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-0-lab_y2" id="id_teachers-0-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-0-subject_y3" id="id_teachers-0-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-0-hours_y3" min="0" id="id_teachers-0-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-0-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-0-lab_y3" id="id_teachers-0-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-2" class="teacher-block">
+              <h4>Teacher 2</h4>
+              <p>
+    <label for="id_teachers-1-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-1-teacher_name" id="id_teachers-1-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-1-years_handling"><div>
+    <label for="id_teachers-1-years_handling_0"><input type="checkbox" name="teachers-1-years_handling" value="1" id="id_teachers-1-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-1-years_handling_1"><input type="checkbox" name="teachers-1-years_handling" value="2" id="id_teachers-1-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-1-years_handling_2"><input type="checkbox" name="teachers-1-years_handling" value="3" id="id_teachers-1-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-1-subject_y1" id="id_teachers-1-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-1-hours_y1" min="0" id="id_teachers-1-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-1-lab_y1" id="id_teachers-1-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-1-subject_y2" id="id_teachers-1-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-1-hours_y2" min="0" id="id_teachers-1-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-1-lab_y2" id="id_teachers-1-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-1-subject_y3" id="id_teachers-1-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-1-hours_y3" min="0" id="id_teachers-1-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-1-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-1-lab_y3" id="id_teachers-1-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-3" class="teacher-block">
+              <h4>Teacher 3</h4>
+              <p>
+    <label for="id_teachers-2-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-2-teacher_name" id="id_teachers-2-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-2-years_handling"><div>
+    <label for="id_teachers-2-years_handling_0"><input type="checkbox" name="teachers-2-years_handling" value="1" id="id_teachers-2-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-2-years_handling_1"><input type="checkbox" name="teachers-2-years_handling" value="2" id="id_teachers-2-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-2-years_handling_2"><input type="checkbox" name="teachers-2-years_handling" value="3" id="id_teachers-2-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-2-subject_y1" id="id_teachers-2-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-2-hours_y1" min="0" id="id_teachers-2-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-2-lab_y1" id="id_teachers-2-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-2-subject_y2" id="id_teachers-2-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-2-hours_y2" min="0" id="id_teachers-2-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-2-lab_y2" id="id_teachers-2-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-2-subject_y3" id="id_teachers-2-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-2-hours_y3" min="0" id="id_teachers-2-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-2-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-2-lab_y3" id="id_teachers-2-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-4" class="teacher-block">
+              <h4>Teacher 4</h4>
+              <p>
+    <label for="id_teachers-3-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-3-teacher_name" id="id_teachers-3-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-3-years_handling"><div>
+    <label for="id_teachers-3-years_handling_0"><input type="checkbox" name="teachers-3-years_handling" value="1" id="id_teachers-3-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-3-years_handling_1"><input type="checkbox" name="teachers-3-years_handling" value="2" id="id_teachers-3-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-3-years_handling_2"><input type="checkbox" name="teachers-3-years_handling" value="3" id="id_teachers-3-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-3-subject_y1" id="id_teachers-3-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-3-hours_y1" min="0" id="id_teachers-3-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-3-lab_y1" id="id_teachers-3-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-3-subject_y2" id="id_teachers-3-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-3-hours_y2" min="0" id="id_teachers-3-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-3-lab_y2" id="id_teachers-3-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-3-subject_y3" id="id_teachers-3-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-3-hours_y3" min="0" id="id_teachers-3-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-3-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-3-lab_y3" id="id_teachers-3-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-5" class="teacher-block">
+              <h4>Teacher 5</h4>
+              <p>
+    <label for="id_teachers-4-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-4-teacher_name" id="id_teachers-4-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-4-years_handling"><div>
+    <label for="id_teachers-4-years_handling_0"><input type="checkbox" name="teachers-4-years_handling" value="1" id="id_teachers-4-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-4-years_handling_1"><input type="checkbox" name="teachers-4-years_handling" value="2" id="id_teachers-4-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-4-years_handling_2"><input type="checkbox" name="teachers-4-years_handling" value="3" id="id_teachers-4-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-4-subject_y1" id="id_teachers-4-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-4-hours_y1" min="0" id="id_teachers-4-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-4-lab_y1" id="id_teachers-4-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-4-subject_y2" id="id_teachers-4-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-4-hours_y2" min="0" id="id_teachers-4-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-4-lab_y2" id="id_teachers-4-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-4-subject_y3" id="id_teachers-4-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-4-hours_y3" min="0" id="id_teachers-4-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-4-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-4-lab_y3" id="id_teachers-4-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-6" class="teacher-block">
+              <h4>Teacher 6</h4>
+              <p>
+    <label for="id_teachers-5-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-5-teacher_name" id="id_teachers-5-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-5-years_handling"><div>
+    <label for="id_teachers-5-years_handling_0"><input type="checkbox" name="teachers-5-years_handling" value="1" id="id_teachers-5-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-5-years_handling_1"><input type="checkbox" name="teachers-5-years_handling" value="2" id="id_teachers-5-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-5-years_handling_2"><input type="checkbox" name="teachers-5-years_handling" value="3" id="id_teachers-5-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-5-subject_y1" id="id_teachers-5-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-5-hours_y1" min="0" id="id_teachers-5-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-5-lab_y1" id="id_teachers-5-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-5-subject_y2" id="id_teachers-5-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-5-hours_y2" min="0" id="id_teachers-5-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-5-lab_y2" id="id_teachers-5-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-5-subject_y3" id="id_teachers-5-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-5-hours_y3" min="0" id="id_teachers-5-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-5-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-5-lab_y3" id="id_teachers-5-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+            <div id="teacher-7" class="teacher-block">
+              <h4>Teacher 7</h4>
+              <p>
+    <label for="id_teachers-6-teacher_name">Teacher name:</label>
+    <input type="text" name="teachers-6-teacher_name" id="id_teachers-6-teacher_name">
+    
+    
+  </p>
+
+  
+  <p>
+    <label>Years teacher handles:</label>
+    <div id="id_teachers-6-years_handling"><div>
+    <label for="id_teachers-6-years_handling_0"><input type="checkbox" name="teachers-6-years_handling" value="1" id="id_teachers-6-years_handling_0">
+ 1st Year</label>
+
+</div><div>
+    <label for="id_teachers-6-years_handling_1"><input type="checkbox" name="teachers-6-years_handling" value="2" id="id_teachers-6-years_handling_1">
+ 2nd Year</label>
+
+</div><div>
+    <label for="id_teachers-6-years_handling_2"><input type="checkbox" name="teachers-6-years_handling" value="3" id="id_teachers-6-years_handling_2">
+ 3rd Year</label>
+
+</div>
+</div>
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-subject_y1">Subject for 1st Year (if handling):</label>
+    <input type="text" name="teachers-6-subject_y1" id="id_teachers-6-subject_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-hours_y1">Hours/week for 1st Year:</label>
+    <input type="number" name="teachers-6-hours_y1" min="0" id="id_teachers-6-hours_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-lab_y1">Integrated (lab) for 1st Year?</label>
+    <input type="checkbox" name="teachers-6-lab_y1" id="id_teachers-6-lab_y1">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-subject_y2">Subject for 2nd Year (if handling):</label>
+    <input type="text" name="teachers-6-subject_y2" id="id_teachers-6-subject_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-hours_y2">Hours/week for 2nd Year:</label>
+    <input type="number" name="teachers-6-hours_y2" min="0" id="id_teachers-6-hours_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-lab_y2">Integrated (lab) for 2nd Year?</label>
+    <input type="checkbox" name="teachers-6-lab_y2" id="id_teachers-6-lab_y2">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-subject_y3">Subject for 3rd Year (if handling):</label>
+    <input type="text" name="teachers-6-subject_y3" id="id_teachers-6-subject_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-hours_y3">Hours/week for 3rd Year:</label>
+    <input type="number" name="teachers-6-hours_y3" min="0" id="id_teachers-6-hours_y3">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_teachers-6-lab_y3">Integrated (lab) for 3rd Year?</label>
+    <input type="checkbox" name="teachers-6-lab_y3" id="id_teachers-6-lab_y3">
+    
+    
+      
+    
+  </p>
+            </div>
+          
+        
+        </div>
+        <div class="button-center"><button type="submit">Generate Timetable</button></div>
+      </form>
+
+      <p><a href="/timetable/start/">Back</a></p>
+    </div>
+  </div>
+</body>
+</html>
