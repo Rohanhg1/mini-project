@@ -1,53 +1,268 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timetable - Teachers</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Additional inline styles for form customization */
+    .teacher-form-grid {
+      display: contents;
+    }
+  </style>
 </head>
 <body>
-  <main style="max-width:980px;margin:20px auto;padding:10px;">
-    <h2>Timetable Generator — Teachers</h2>
-    <p>Enter details for each teacher (1..{{ total }}). All fields are editable below.</p>
-    <p id="form-debug" style="background:#222;padding:8px;border-radius:6px;color:#fff;">Rendering {{ formset.forms|length }} forms (TOTAL_FORMS={{ formset.management_form.TOTAL_FORMS.value }})</p>
+  <div class="container">
+    <h2>🎓 Timetable Generator — Teachers</h2>
+    <p class="subtitle">Enter details for each teacher below. All fields are editable.</p>
+    <p class="debug-info" id="form-debug">Rendering {{ formset.forms|length }} forms (TOTAL_FORMS={{ formset.management_form.TOTAL_FORMS.value }})</p>
 
-    <form method="post">
+    <form method="post" id="teacher-form">
       {% csrf_token %}
       {% if formset %}{{ formset.management_form }}{% endif %}
 
       {% for form in formset.forms %}
-        <fieldset class="teacher-block" id="teacher-{{ forloop.counter }}" style="border:2px solid #c33;">
-          <legend>Teacher {{ forloop.counter }}</legend>
-          {{ form.as_p }}
+        <fieldset class="teacher-block" id="teacher-{{ forloop.counter }}">
+          <legend>👨‍🏫 Teacher {{ forloop.counter }}</legend>
+          
+          <!-- Teacher Name -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="{{ form.teacher_name.id_for_label }}">{{ form.teacher_name.label }}</label>
+              {{ form.teacher_name }}
+            </div>
+          </div>
+
+          <!-- Years Handling -->
+          <div class="form-group">
+            <label>{{ form.years_handling.label }}</label>
+            <div class="checkbox-group">
+              {% for choice in form.years_handling %}
+                {{ choice }}
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Year 1 Section -->
+          <div class="year-section">
+            <div class="year-section-title">Year 1 Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="{{ form.subject_y1.id_for_label }}">{{ form.subject_y1.label }}</label>
+                {{ form.subject_y1 }}
+              </div>
+              <div class="form-group">
+                <label for="{{ form.hours_y1.id_for_label }}">{{ form.hours_y1.label }}</label>
+                {{ form.hours_y1 }}
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="checkbox-group">
+                {{ form.integrated_y1 }}
+                <label for="{{ form.integrated_y1.id_for_label }}">{{ form.integrated_y1.label }}</label>
+              </div>
+              <div class="checkbox-group">
+                {{ form.external_y1 }}
+                <label for="{{ form.external_y1.id_for_label }}">{{ form.external_y1.label }}</label>
+              </div>
+            </div>
+            
+            <!-- Time Preference for Y1 -->
+            <div class="checkbox-group" style="margin-top: 10px;">
+              {{ form.has_preference_y1 }}
+              <label for="{{ form.has_preference_y1.id_for_label }}">⏰ {{ form.has_preference_y1.label }}</label>
+            </div>
+            <div class="preference-section preference-hidden" id="pref-y1-{{ forloop.counter }}">
+              <div class="form-group">
+                <label for="{{ form.preferred_time_y1.id_for_label }}">{{ form.preferred_time_y1.label }}</label>
+                {{ form.preferred_time_y1 }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Year 2 Section -->
+          <div class="year-section">
+            <div class="year-section-title">Year 2 Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="{{ form.subject_y2.id_for_label }}">{{ form.subject_y2.label }}</label>
+                {{ form.subject_y2 }}
+              </div>
+              <div class="form-group">
+                <label for="{{ form.hours_y2.id_for_label }}">{{ form.hours_y2.label }}</label>
+                {{ form.hours_y2 }}
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="checkbox-group">
+                {{ form.integrated_y2 }}
+                <label for="{{ form.integrated_y2.id_for_label }}">{{ form.integrated_y2.label }}</label>
+              </div>
+              <div class="checkbox-group">
+                {{ form.external_y2 }}
+                <label for="{{ form.external_y2.id_for_label }}">{{ form.external_y2.label }}</label>
+              </div>
+            </div>
+            
+            <!-- Time Preference for Y2 -->
+            <div class="checkbox-group" style="margin-top: 10px;">
+              {{ form.has_preference_y2 }}
+              <label for="{{ form.has_preference_y2.id_for_label }}">⏰ {{ form.has_preference_y2.label }}</label>
+            </div>
+            <div class="preference-section preference-hidden" id="pref-y2-{{ forloop.counter }}">
+              <div class="form-group">
+                <label for="{{ form.preferred_time_y2.id_for_label }}">{{ form.preferred_time_y2.label }}</label>
+                {{ form.preferred_time_y2 }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Year 3 Section -->
+          <div class="year-section">
+            <div class="year-section-title">Year 3 Details</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="{{ form.subject_y3.id_for_label }}">{{ form.subject_y3.label }}</label>
+                {{ form.subject_y3 }}
+              </div>
+              <div class="form-group">
+                <label for="{{ form.hours_y3.id_for_label }}">{{ form.hours_y3.label }}</label>
+                {{ form.hours_y3 }}
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="checkbox-group">
+                {{ form.integrated_y3 }}
+                <label for="{{ form.integrated_y3.id_for_label }}">{{ form.integrated_y3.label }}</label>
+              </div>
+              <div class="checkbox-group">
+                {{ form.external_y3 }}
+                <label for="{{ form.external_y3.id_for_label }}">{{ form.external_y3.label }}</label>
+              </div>
+            </div>
+            
+            <!-- Time Preference for Y3 -->
+            <div class="checkbox-group" style="margin-top: 10px;">
+              {{ form.has_preference_y3 }}
+              <label for="{{ form.has_preference_y3.id_for_label }}">⏰ {{ form.has_preference_y3.label }}</label>
+            </div>
+            <div class="preference-section preference-hidden" id="pref-y3-{{ forloop.counter }}">
+              <div class="form-group">
+                <label for="{{ form.preferred_time_y3.id_for_label }}">{{ form.preferred_time_y3.label }}</label>
+                {{ form.preferred_time_y3 }}
+              </div>
+            </div>
+          </div>
+
         </fieldset>
       {% endfor %}
 
-      <div style="margin-top:12px;">
-        <button type="submit">Generate Timetable</button>
-        <a href="{% url 'timetable_start' %}" style="margin-left:12px;">Back</a>
+      <div class="button-group">
+        <button type="submit" class="btn-primary">✨ Generate Timetable</button>
+        <a href="{% url 'timetable_start' %}" class="btn-secondary">← Back</a>
       </div>
     </form>
-  </main>
+  </div>
+
   <script>
     // Defensive: remove any bubble cursor element that might overlay inputs
     try {
       document.querySelectorAll('.bubble').forEach(function(el){ el.remove(); });
       // Ensure inputs accept pointer events
-      document.querySelectorAll('form input, form select, form textarea, form button').forEach(function(el){ el.style.pointerEvents = 'auto'; el.style.zIndex = 2; });
+      document.querySelectorAll('form input, form select, form textarea, form button').forEach(function(el){ 
+        el.style.pointerEvents = 'auto'; 
+        el.style.zIndex = 2; 
+      });
       // Raise main content above any background decorations
-      var main = document.querySelector('main'); if(main) main.style.zIndex = 1;
+      var main = document.querySelector('.container'); 
+      if(main) main.style.zIndex = 1;
     } catch (e) {
       console.warn('Defensive UI fix failed', e);
     }
+
     // Debug: count rendered teacher blocks and update debug box & console
     (function(){
       try{
         var blocks = document.querySelectorAll('fieldset.teacher-block');
         var dbg = document.getElementById('form-debug');
-        if(dbg) dbg.textContent = 'Rendering ' + blocks.length + ' forms (TOTAL_FORMS=' + (document.querySelector('input[name="teachers-TOTAL_FORMS"]') ? document.querySelector('input[name="teachers-TOTAL_FORMS"]').value : 'MISSING') + ')';
+        if(dbg) dbg.textContent = 'Rendering ' + blocks.length + ' forms (TOTAL_FORMS=' + 
+          (document.querySelector('input[name="teachers-TOTAL_FORMS"]') ? 
+            document.querySelector('input[name="teachers-TOTAL_FORMS"]').value : 'MISSING') + ')';
         console.log('Teacher fieldsets on page:', blocks.length);
-        blocks.forEach(function(b,i){ b.style.outline = '2px solid rgba(200,50,50,0.9)'; b.style.marginBottom = '12px'; });
       } catch(e){ console.warn('Debug count failed', e); }
     })();
+
+    // Toggle preference sections based on checkbox
+    function setupPreferenceToggles() {
+      const teacherBlocks = document.querySelectorAll('.teacher-block');
+      
+      teacherBlocks.forEach((block, index) => {
+        const teacherNum = index + 1;
+        
+        // Year 1
+        const prefCheckY1 = block.querySelector('input[name$="has_preference_y1"]');
+        const prefSectionY1 = document.getElementById(`pref-y1-${teacherNum}`);
+        if (prefCheckY1 && prefSectionY1) {
+          prefCheckY1.addEventListener('change', function() {
+            if (this.checked) {
+              prefSectionY1.classList.remove('preference-hidden');
+            } else {
+              prefSectionY1.classList.add('preference-hidden');
+            }
+          });
+          // Initialize on page load
+          if (prefCheckY1.checked) {
+            prefSectionY1.classList.remove('preference-hidden');
+          }
+        }
+        
+        // Year 2
+        const prefCheckY2 = block.querySelector('input[name$="has_preference_y2"]');
+        const prefSectionY2 = document.getElementById(`pref-y2-${teacherNum}`);
+        if (prefCheckY2 && prefSectionY2) {
+          prefCheckY2.addEventListener('change', function() {
+            if (this.checked) {
+              prefSectionY2.classList.remove('preference-hidden');
+            } else {
+              prefSectionY2.classList.add('preference-hidden');
+            }
+          });
+          // Initialize on page load
+          if (prefCheckY2.checked) {
+            prefSectionY2.classList.remove('preference-hidden');
+          }
+        }
+        
+        // Year 3
+        const prefCheckY3 = block.querySelector('input[name$="has_preference_y3"]');
+        const prefSectionY3 = document.getElementById(`pref-y3-${teacherNum}`);
+        if (prefCheckY3 && prefSectionY3) {
+          prefCheckY3.addEventListener('change', function() {
+            if (this.checked) {
+              prefSectionY3.classList.remove('preference-hidden');
+            } else {
+              prefSectionY3.classList.add('preference-hidden');
+            }
+          });
+          // Initialize on page load
+          if (prefCheckY3.checked) {
+            prefSectionY3.classList.remove('preference-hidden');
+          }
+        }
+      });
+    }
+
+    // Initialize preference toggles when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupPreferenceToggles);
+    } else {
+      setupPreferenceToggles();
+    }
   </script>
 </body>
 </html>

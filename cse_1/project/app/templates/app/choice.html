@@ -1,167 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Fullscreen animated snowfall background */
-    body {
+    * {
       margin: 0;
       padding: 0;
-      overflow: hidden;
-
-      /* 🔥 BEAUTIFUL BACKGROUND IMAGE */
-      background-image: url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=80");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-
-      animation: fadeIn 1s ease-in-out;
-      height: 100vh;
-      color: white;
-      font-family: Arial, sans-serif;
+      box-sizing: border-box;
     }
 
-    /* Snowflake container */
-    .snow {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: -1;
+    body {
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #74ABE2, #5563DE, #6C63FF);
+      background-size: 200% 200%;
+      animation: gradientMove 10s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
     }
 
-    .snowflake {
-      position: absolute;
-      top: -10px;
-      color: white;
-      font-size: 1em;
-      opacity: 0.8;
-      animation: fall linear infinite;
-    }
+    @keyframes gradientMove {
 
-    @keyframes fall {
-      to {
-        transform: translateY(110vh);
-        opacity: 0.3;
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
       }
     }
 
-    /* Fade-in */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* Center Container */
-    .content-center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 24px;
+      padding: 50px 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      max-width: 900px;
+      width: 100%;
       text-align: center;
     }
 
-    /* Title animation */
-    .slide-down {
-      animation: slideDown 0.9s ease-in-out;
-      font-size: 32px;
-      font-weight: bold;
+    h2 {
+      color: #6C63FF;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 15px;
     }
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 40px;
+      font-size: 1.1rem;
     }
 
-    /* Buttons */
-    .animated-btn {
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.2);
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: white;
+      border: 2px solid #e8e8e8;
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(108, 99, 255, 0.2);
+      border-color: #6C63FF;
+    }
+
+    .card-icon {
+      font-size: 3.5rem;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: #2c3e50;
+    }
+
+    .card-description {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #FF6B6B, #EE5A6F);
       color: white;
+      padding: 12px 30px;
       border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      backdrop-filter: blur(6px);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      text-decoration: none;
+      display: inline-block;
     }
 
-    .animated-btn:hover {
-      transform: scale(1.07);
-      box-shadow: 0px 10px 20px rgba(255,255,255,0.25);
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
     }
 
-    /* Image Zoom */
-    .animated-btn img {
-      transition: transform 0.3s ease;
-      border-radius: 6px;
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .animated-btn:hover img {
-      transform: scale(1.05);
+    .container {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .card:nth-child(1) {
+      animation: fadeIn 0.7s ease-out;
+    }
+
+    .card:nth-child(2) {
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .card:nth-child(3) {
+      animation: fadeIn 0.9s ease-out;
+    }
+
+    @media (max-width: 768px) {
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
 
 <body>
+  <div class="container">
+    <h2>🎓 Dashboard</h2>
+    <p class="subtitle">Choose an option to get started</p>
 
-  <!-- ❄ Snow animation layer -->
-  <div class="snow" id="snow"></div>
-
-  <script>
-    const snowContainer = document.getElementById("snow");
-
-    for (let i = 0; i < 50; i++) {
-      let snowflake = document.createElement("div");
-      snowflake.classList.add("snowflake");
-      snowflake.innerHTML = "❄";
-
-      snowflake.style.left = Math.random() * 100 + "vw";
-      snowflake.style.fontSize = (Math.random() * 10 + 10) + "px";
-      snowflake.style.animationDuration = (Math.random() * 5 + 4) + "s";
-      snowflake.style.animationDelay = Math.random() * 3 + "s";
-
-      snowContainer.appendChild(snowflake);
-    }
-  </script>
-
-  <!-- CONTENT CENTERED IN MIDDLE -->
-  <div class="content-center">
-    <h2 class="slide-down">Dashboard</h2>
-    <p class="slide-down">Choose an option:</p>
-
-    <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:20px;">
-
-      <!-- Seating Arrangement -->
-      <a href="{% url 'seating' %}" style="display:inline-block;">
-        <button class="animated-btn" style="display:flex; flex-direction:column; align-items:center; padding:10px; width:180px;">
-          <img 
-            src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80"
-            style="width:150px; height:auto; margin-bottom:8px;"
-          >
-          Seating Arrangement
-        </button>
+    <div class="cards-container">
+      <a href="{% url 'seating' %}" class="card">
+        <div class="card-icon">🪑</div>
+        <div class="card-title">Seating Arrangement</div>
+        <div class="card-description">Generate exam seating plans</div>
       </a>
 
-      <!-- Time Table Generator -->
-      <a href="{% url 'timetable_start' %}" style="display:inline-block;">
-        <button class="animated-btn" style="width:180px; padding:20px;">
-          Time Table Generator
-        </button>
+      <a href="{% url 'timetable_start' %}" class="card">
+        <div class="card-icon">📅</div>
+        <div class="card-title">Timetable Generator</div>
+        <div class="card-description">Create class schedules</div>
       </a>
 
-      <!-- Logout -->
-      <a href="{% url 'logout' %}" style="display:inline-block;">
-        <button class="animated-btn" style="width:180px; padding:20px;">
-          Logout
-        </button>
+      <a href="{% url 'logout' %}" class="card logout-card">
+        <div class="card-icon">🚪</div>
+        <div class="card-title">Logout</div>
+        <div class="card-description">Sign out of your account</div>
       </a>
-
     </div>
   </div>
-
 </body>
+
 </html>

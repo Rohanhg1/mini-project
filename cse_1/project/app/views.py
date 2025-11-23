@@ -358,34 +358,59 @@ def timetable_teachers(request):
                     hrs = cd.get("hours_y1") or 0
                     integrated = cd.get("integrated_y1") or False
                     ext = cd.get("external_y1") or False
+                    # Get preference data (JSON format: {"Mon": "0", "Wed": "3", ...})
+                    has_pref = cd.get("has_preference_y1") or False
+                    day_time_json = cd.get("day_time_prefs_y1") or "{}"
+                    import json
+                    try:
+                        day_time_prefs = json.loads(day_time_json) if day_time_json else {}
+                    except:
+                        day_time_prefs = {}
                     # Allow lab-only subjects (hours may be zero) — set is_lab/is_external accordingly
                     if hrs > 0:
-                        entries.append({"teacher": name, "year": 1, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs})
+                        entries.append({"teacher": name, "year": 1, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs, "day_time_prefs": day_time_prefs if has_pref else {}})
                     else:
                         # if hours == 0 but lab checkbox checked, include entry so lab allocation can occur
                         if integrated or ext or cd.get("lab_y1") or cd.get("external_lab_y1"):
-                            entries.append({"teacher": name, "year": 1, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y1") else False, "is_external_lab": ext, "remaining": 0})
+                            entries.append({"teacher": name, "year": 1, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y1") else False, "is_external_lab": ext, "remaining": 0, "day_time_prefs": day_time_prefs if has_pref else {}})
                 if "2" in years:
                     subj = cd.get("subject_y2") or f"{name}-Y2"
                     hrs = cd.get("hours_y2") or 0
                     integrated = cd.get("integrated_y2") or False
                     ext = cd.get("external_y2") or False
+                    # Get preference data (JSON format)
+                    has_pref = cd.get("has_preference_y2") or False
+                    day_time_json = cd.get("day_time_prefs_y2") or "{}"
+                    try:
+                        day_time_prefs = json.loads(day_time_json) if day_time_json else {}
+                    except:
+                        day_time_prefs = {}
                     if hrs > 0:
-                        entries.append({"teacher": name, "year": 2, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs})
+                        entries.append({"teacher": name, "year": 2, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs, "day_time_prefs": day_time_prefs if has_pref else {}})
                     else:
                         if integrated or ext or cd.get("lab_y2") or cd.get("external_lab_y2"):
-                            entries.append({"teacher": name, "year": 2, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y2") else False, "is_external_lab": ext, "remaining": 0})
+                            entries.append({"teacher": name, "year": 2, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y2") else False, "is_external_lab": ext, "remaining": 0, "day_time_prefs": day_time_prefs if has_pref else {}})
                 if "3" in years:
                     subj = cd.get("subject_y3") or f"{name}-Y3"
                     hrs = cd.get("hours_y3") or 0
                     integrated = cd.get("integrated_y3") or False
                     ext = cd.get("external_y3") or False
+                    # Get preference data (JSON format)
+                    has_pref = cd.get("has_preference_y3") or False
+                    day_time_json = cd.get("day_time_prefs_y3") or "{}"
+                    try:
+                        day_time_prefs = json.loads(day_time_json) if day_time_json else {}
+                    except:
+                        day_time_prefs = {}
                     if hrs > 0:
-                        entries.append({"teacher": name, "year": 3, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs})
+                        entries.append({"teacher": name, "year": 3, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs, "day_time_prefs": day_time_prefs if has_pref else {}})
                     else:
                         if integrated or ext or cd.get("lab_y3") or cd.get("external_lab_y3"):
-                            entries.append({"teacher": name, "year": 3, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y3") else False, "is_external_lab": ext, "remaining": 0})
+                            entries.append({"teacher": name, "year": 3, "subject": subj, "hours": 0, "is_integrated": integrated, "is_lab": True if cd.get("lab_y3") else False, "is_external_lab": ext, "remaining": 0, "day_time_prefs": day_time_prefs if has_pref else {}})
 
+            # Store entries in session for regeneration
+            request.session["entries"] = entries
+            
             # call allocation (defined in later parts)
             timetables, unallocated = allocate_timetable_with_ga(entries)
 
@@ -896,8 +921,32 @@ def allocate_timetable_with_ga(entries_input):
             cand.append(e)
         if not cand:
             return None
+        
+        # Helper function to check if period and day match day-specific time preferences
+        def matches_preference(entry, period_idx, current_day):
+            day_time_prefs = entry.get('day_time_prefs', {})
+            # Bonus for matching a preferred day (even if time not specified)
+            if current_day in day_time_prefs:
+                pref_time = day_time_prefs[current_day]
+                # If a specific time is set, check for exact period match
+                if pref_time:
+                    try:
+                        pref_period = int(pref_time)
+                        if pref_period == period_idx:
+                            return 10  # Day + time match (5+5)
+                    except (ValueError, TypeError):
+                        pass
+                # Day is preferred but time is any or not matching -> partial bonus
+                return 5  # Day match only
+            # No preference for this day
+            return 0
+        
+        # Sort by: preference match (higher is better) + remaining hours (higher is better)
         cand.sort(
-            key=lambda x: (x.get("theory_remaining", 0) + x.get("lab_remaining", 0)),
+            key=lambda x: (
+                matches_preference(x, p_idx, day),  # Preference bonus (0 or 10)
+                x.get("theory_remaining", 0) + x.get("lab_remaining", 0)  # Existing priority
+            ),
             reverse=True
         )
         return cand[0]

@@ -1,239 +1,770 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timetable - Teachers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #74ABE2, #5563DE, #3C3B6E);
-      color: #fff;
+    :root {
+      --primary-color: #6C63FF;
+      --secondary-color: #5563DE;
+      --accent-color: #00C9A7;
+      --bg-gradient-start: #74ABE2;
+      --bg-gradient-end: #6C63FF;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      --input-border: #e0e0e0;
+      --input-focus: #6C63FF;
+      --text-dark: #2c3e50;
+      --text-light: #7f8c8d;
+    }
+
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      background-size: 200% 200%;
+      animation: gradientMove 10s ease infinite;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      color: var(--text-dark);
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    @keyframes gradientMove {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.1);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: var(--card-shadow);
       backdrop-filter: blur(10px);
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      padding: 30px 40px;
-      margin: 40px auto;
-      width: 90%;
-      max-width: 700px;
     }
 
     h2 {
-      text-align: center;
+      color: var(--primary-color);
+      font-size: 2rem;
+      font-weight: 700;
       margin-bottom: 10px;
-      color: #FFD700;
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+      text-align: center;
     }
 
-    p {
+    .subtitle {
       text-align: center;
+      color: var(--text-light);
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+    }
+
+    .teacher-block {
+      background: #ffffff;
+      border: 2px solid #e8e8e8;
+      border-radius: 16px;
+      padding: 25px;
       margin-bottom: 25px;
-      color: #f1f1f1;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      animation: fadeIn 0.5s ease-out;
     }
 
-    /* HIDE all teacher forms by default; show only .active ones */
-    .teacher-form {
-      display: none;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      color: #fff;
+    .teacher-block:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 16px rgba(108, 99, 255, 0.15);
+      transform: translateY(-2px);
     }
 
-    .teacher-form.active {
-      display: block;
-    }
-
-    h3 {
-      color: #FFDD57;
-      margin-top: 0;
-    }
-
-    label {
-      display: block;
-      margin-top: 8px;
+    .teacher-block h3 {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 10px 24px;
+      border-radius: 12px;
       font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
     }
 
-    input[type="text"], input[type="number"], select, textarea {
-      width: 100%;
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: var(--text-dark);
+      font-size: 0.9rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
+      padding: 10px 14px;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+      font-family: inherit;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="number"]:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       padding: 8px;
-      border-radius: 6px;
-      border: none;
-      margin-top: 5px;
-      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin: 6px 0;
     }
 
-    .inline-checkbox {
-      display: inline-flex;
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+    }
+
+    .sem-section {
+      background: #f8f9fa;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border-left: 4px solid var(--primary-color);
+      display: none;
+    }
+
+    .sem-section.active {
+      display: block;
+    }
+
+    .sem-section-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      display: flex;
       align-items: center;
       gap: 8px;
-      margin-right: 12px;
     }
 
-    button {
-      background-color: #FFD700;
-      color: #000;
-      border: none;
-      padding: 10px 25px;
+    .preference-section {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+      padding: 15px;
       border-radius: 8px;
-      font-size: 16px;
+      margin-top: 12px;
+      border: 2px dashed var(--primary-color);
+    }
+
+    .preference-hidden {
+      display: none;
+    }
+
+    .day-time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .day-time-item {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #e0e0e0;
+    }
+
+    .day-time-item label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--primary-color);
+    }
+
+    .day-time-item select {
+      width: 100%;
+      padding: 8px;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button[type="submit"] {
+      background: linear-gradient(135deg, var(--accent-color), #00b894);
+      color: white;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      display: block;
-      margin: 20px auto 0;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 201, 167, 0.3);
     }
 
-    button:hover {
-      background-color: #ffb400;
-      transform: scale(1.05);
+    button[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 201, 167, 0.4);
     }
 
-    .dropdown {
-      text-align: center;
-      margin-bottom: 25px;
+    .error-box {
+      background: rgba(255, 0, 0, 0.1);
+      border: 2px solid #ff4444;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      color: #c00;
     }
 
-    select {
-      padding: 8px 15px;
-      border-radius: 8px;
-      border: none;
-      font-size: 15px;
-    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
 
-    .year-block { background: rgba(0,0,0,0.06); padding:10px; border-radius:6px; margin-top:8px; }
-    .small { font-size: 0.9em; color: #eee; margin-top:6px; }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h2>Timetable Generator — Teachers</h2>
-    <p>Select semester type to show the corresponding teacher forms.</p>
+    <h2>🎓 Timetable Generator — Teachers</h2>
+    <p class="subtitle">Select semesters to enter details. Semester sections appear only when selected.</p>
 
     {% if errors %}
-      <div style="background: rgba(255, 0, 0, 0.2); border: 1px solid red; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-        <strong>Errors:</strong>
-        <ul>
-          {% for error in errors %}
-            <li>{{ error }}</li>
-          {% endfor %}
-        </ul>
-      </div>
+    <div class="error-box">
+      <strong>⚠️ Errors:</strong>
+      <ul>
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
     {% endif %}
 
-    <!-- IMPORTANT: include enctype and management_form so formset POSTs correctly -->
-    <form method="post" action="" enctype="multipart/form-data">
+    <form method="post" action="" enctype="multipart/form-data" id="mainForm">
       {% csrf_token %}
       {{ formset.management_form }}
 
-      <!-- Semester Selection -->
-      <div class="dropdown">
-        <label for="semType"><strong>Semester Type:</strong></label>
-        <select id="semType">
-          <option value="">-- Select Semester Type --</option>
-          <option value="odd">Odd Semester (3, 5, 7)</option>
-          <option value="even">Even Semester (4, 6, 8)</option>
-        </select>
-      </div>
-
-      <!-- Teacher Forms (render fields explicitly so external_* checkboxes are visible) -->
       {% for form in formset.forms %}
-        <div class="teacher-form active" id="teacherForm{{ forloop.counter }}">
-          <h3>Teacher {{ forloop.counter }}</h3>
+      <div class="teacher-block" id="teacher-{{ forloop.counter }}">
+        <h3>👨‍🏫 Teacher {{ forloop.counter }}</h3>
 
-          <label>Teacher name</label>
+        <!-- Teacher Name -->
+        <div class="form-group">
+          <label>Teacher Name</label>
           {{ form.teacher_name }}
-
-          <label class="small">Years handling</label>
-          {{ form.years_handling }}
-
-          <div class="year-block">
-            <strong>Year {{ year_labels.1 }}</strong>
-            <label>Subject</label>{{ form.subject_y1 }}
-            <label>Hours</label>{{ form.hours_y1 }}
-            <div class="small">
-              <label class="inline-checkbox">{{ form.integrated_y1 }} <span>Integrated</span></label>
-              <label class="inline-checkbox">{{ form.external_y1 }} <span>External Lab</span></label>
-            </div>
-          </div>
-
-          <div class="year-block">
-            <strong>Year {{ year_labels.2 }}</strong>
-            <label>Subject</label>{{ form.subject_y2 }}
-            <label>Hours</label>{{ form.hours_y2 }}
-            <div class="small">
-              <label class="inline-checkbox">{{ form.integrated_y2 }} <span>Integrated</span></label>
-              <label class="inline-checkbox">{{ form.external_y2 }} <span>External Lab</span></label>
-            </div>
-          </div>
-
-          <div class="year-block">
-            <strong>Year {{ year_labels.3 }}</strong>
-            <label>Subject</label>{{ form.subject_y3 }}
-            <label>Hours</label>{{ form.hours_y3 }}
-            <div class="small">
-              <label class="inline-checkbox">{{ form.integrated_y3 }} <span>Integrated</span></label>
-              <label class="inline-checkbox">{{ form.external_y3 }} <span>External Lab</span></label>
-            </div>
-          </div>
-
         </div>
+
+        <!-- Semesters Handling -->
+        <div class="form-group">
+          <label>Semesters Handling (Select to show details)</label>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            {% for choice in form.years_handling %}
+            <div class="checkbox-group" style="flex: 0 0 auto;">
+              {{ choice }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Semester 1 Section -->
+        <div class="sem-section sem-1">
+          <div class="sem-section-title">📚 Semester {{ year_labels.1 }} Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Subject</label>
+              {{ form.subject_y1 }}
+            </div>
+            <div class="form-group">
+              <label>Hours</label>
+              {{ form.hours_y1 }}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="checkbox-group">
+              {{ form.integrated_y1 }}
+              <label>Integrated</label>
+            </div>
+            <div class="checkbox-group">
+              {{ form.external_y1 }}
+              <label>External Lab</label>
+            </div>
+          </div>
+
+          <!-- Day & Time Preference for Sem 1 -->
+          <div class="checkbox-group" style="margin-top: 10px;">
+            {{ form.has_preference_y1 }}
+            <label>⏰ Set day & time preferences</label>
+          </div>
+          <div class="preference-section preference-hidden" id="pref-y1-{{ forloop.counter }}">
+            <strong style="display:block; margin-bottom:10px;">Select preferred day(s) and time for each:</strong>
+            <div class="day-time-grid" id="day-time-grid-y1-{{ forloop.counter}}">
+              <div class="day-time-item">
+                <input type="checkbox" id="mon-y1-{{ forloop.counter }}" class="day-checkbox" data-day="Mon">
+                <label for="mon-y1-{{ forloop.counter }}">Monday</label>
+                <select class="time-select" data-day="Mon" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" id="tue-y1-{{ forloop.counter }}" class="day-checkbox" data-day="Tue">
+                <label for="tue-y1-{{ forloop.counter }}">Tuesday</label>
+                <select class="time-select" data-day="Tue" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" id="wed-y1-{{ forloop.counter }}" class="day-checkbox" data-day="Wed">
+                <label for="wed-y1-{{ forloop.counter }}">Wednesday</label>
+                <select class="time-select" data-day="Wed" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" id="thu-y1-{{ forloop.counter }}" class="day-checkbox" data-day="Thu">
+                <label for="thu-y1-{{ forloop.counter }}">Thursday</label>
+                <select class="time-select" data-day="Thu" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" id="fri-y1-{{ forloop.counter }}" class="day-checkbox" data-day="Fri">
+                <label for="fri-y1-{{ forloop.counter }}">Friday</label>
+                <select class="time-select" data-day="Fri" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+            </div>
+            {{ form.day_time_prefs_y1 }}
+          </div>
+        </div>
+
+        <!-- Semester 2 Section (Similar structure) -->
+        <div class="sem-section sem-2">
+          <div class="sem-section-title">📚 Semester {{ year_labels.2 }} Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Subject</label>
+              {{ form.subject_y2 }}
+            </div>
+            <div class="form-group">
+              <label>Hours</label>
+              {{ form.hours_y2 }}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="checkbox-group">
+              {{ form.integrated_y2 }}
+              <label>Integrated</label>
+            </div>
+            <div class="checkbox-group">
+              {{ form.external_y2 }}
+              <label>External Lab</label>
+            </div>
+          </div>
+
+          <div class="checkbox-group" style="margin-top: 10px;">
+            {{ form.has_preference_y2 }}
+            <label>⏰ Set day & time preferences</label>
+          </div>
+          <div class="preference-section preference-hidden" id="pref-y2-{{ forloop.counter }}">
+            <strong style="display:block; margin-bottom:10px;">Select preferred day(s) and time for each:</strong>
+            <div class="day-time-grid" id="day-time-grid-y2-{{ forloop.counter}}">
+              <!-- Same 5 day-time items as Sem 1 -->
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Mon">
+                <label>Monday</label>
+                <select class="time-select" data-day="Mon" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Tue">
+                <label>Tuesday</label>
+                <select class="time-select" data-day="Tue" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Wed">
+                <label>Wednesday</label>
+                <select class="time-select" data-day="Wed" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Thu">
+                <label>Thursday</label>
+                <select class="time-select" data-day="Thu" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Fri">
+                <label>Friday</label>
+                <select class="time-select" data-day="Fri" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+            </div>
+            {{ form.day_time_prefs_y2 }}
+          </div>
+        </div>
+
+        <!-- Semester 3 Section (Similar structure) -->
+        <div class="sem-section sem-3">
+          <div class="sem-section-title">📚 Semester {{ year_labels.3 }} Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Subject</label>
+              {{ form.subject_y3 }}
+            </div>
+            <div class="form-group">
+              <label>Hours</label>
+              {{ form.hours_y3 }}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="checkbox-group">
+              {{ form.integrated_y3 }}
+              <label>Integrated</label>
+            </div>
+            <div class="checkbox-group">
+              {{ form.external_y3 }}
+              <label>External Lab</label>
+            </div>
+          </div>
+
+          <div class="checkbox-group" style="margin-top: 10px;">
+            {{ form.has_preference_y3 }}
+            <label>⏰ Set day & time preferences</label>
+          </div>
+          <div class="preference-section preference-hidden" id="pref-y3-{{ forloop.counter }}">
+            <strong style="display:block; margin-bottom:10px;">Select preferred day(s) and time for each:</strong>
+            <div class="day-time-grid" id="day-time-grid-y3-{{ forloop.counter}}">
+              <!-- Same 5 day-time items -->
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Mon">
+                <label>Monday</label>
+                <select class="time-select" data-day="Mon" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Tue">
+                <label>Tuesday</label>
+                <select class="time-select" data-day="Tue" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Wed">
+                <label>Wednesday</label>
+                <select class="time-select" data-day="Wed" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Thu">
+                <label>Thursday</label>
+                <select class="time-select" data-day="Thu" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+              <div class="day-time-item">
+                <input type="checkbox" class="day-checkbox" data-day="Fri">
+                <label>Friday</label>
+                <select class="time-select" data-day="Fri" disabled>
+                  <option value="">Any time</option>
+                  <option value="0">1st (9:00-10:00)</option>
+                  <option value="1">2nd (10:00-11:00)</option>
+                  <option value="3">3rd (11:15-12:15)</option>
+                  <option value="4">4th (12:15-1:15)</option>
+                  <option value="6">5th (2:30-3:20)</option>
+                  <option value="7">6th (3:20-4:15)</option>
+                  <option value="8">7th (4:15-5:00)</option>
+                </select>
+              </div>
+            </div>
+            {{ form.day_time_prefs_y3 }}
+          </div>
+        </div>
+
+      </div>
       {% endfor %}
 
-      <button type="submit">Generate</button>
+      <div class="button-group">
+        <button type="submit">✨ Generate Timetable</button>
+      </div>
     </form>
-
-    <!--
-      If you prefer the compact automatic layout, uncomment the alternative block below.
-      It will render each form with form.as_p instead of explicit fields.
-    -->
-    <!--
-    <form method="post" action="" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ formset.management_form }}
-      {% for form in formset.forms %}
-        <div class="teacher-form">
-          {{ form.as_p }}
-        </div>
-      {% endfor %}
-      <button type="submit">Generate Timetable</button>
-    </form>
-    -->
-
   </div>
 
   <script>
-    const semTypeSelect = document.getElementById('semType');
+    // Toggle semester sections based on checkbox selection
+    function setupSemesterToggles() {
+      const teacherBlocks = document.querySelectorAll('.teacher-block');
 
-    // mapping teacher forms to visible indices (adjust if your teacher count changes)
-    const semYearMappings = {
-      odd: { mapping: {3:[1,2], 5:[3,4], 7:[5,6,7]} },
-      even: { mapping: {4:[1,2], 6:[3,4], 8:[5,6,7]} },
-    };
+      teacherBlocks.forEach((block) => {
+        const semCheckboxes = block.querySelectorAll('input[name$="years_handling"]');
+        const semSections = block.querySelectorAll('.sem-section');
 
-    function showFormsForSemester(type) {
-      // Show all teacher forms regardless of semester selection
-      document.querySelectorAll('.teacher-form').forEach(form => form.classList.add('active'));
+        function updateSemesterSections() {
+          semCheckboxes.forEach((checkbox, idx) => {
+            if (checkbox.checked) {
+              semSections[idx].classList.add('active');
+            } else {
+              semSections[idx].classList.remove('active');
+            }
+          });
+        }
+
+        semCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener('change', updateSemesterSections);
+        });
+
+        updateSemesterSections();
+      });
     }
 
-    semTypeSelect.addEventListener('change', e => {
-      showFormsForSemester(e.target.value);
-    });
+    // Toggle preference sections based on checkbox
+    function setupPreferenceToggles() {
+      const teacherBlocks = document.querySelectorAll('.teacher-block');
 
-    // Show all forms by default on page load
-    showFormsForSemester();
+      teacherBlocks.forEach((block, index) => {
+        const teacherNum = index + 1;
+
+        ['y1', 'y2', 'y3'].forEach((sem) => {
+          const prefCheck = block.querySelector(`input[name$="has_preference_${sem}"]`);
+          const prefSection = document.getElementById(`pref-${sem}-${teacherNum}`);
+
+          if (prefCheck && prefSection) {
+            prefCheck.addEventListener('change', function () {
+              if (this.checked) {
+                prefSection.classList.remove('preference-hidden');
+              } else {
+                prefSection.classList.add('preference-hidden');
+              }
+            });
+
+            if (prefCheck.checked) {
+              prefSection.classList.remove('preference-hidden');
+            }
+          }
+        });
+      });
+    }
+
+    // Handle day checkbox enabling/disabling time selects
+    function setupDayTimeControls() {
+      document.querySelectorAll('.day-time-grid').forEach(grid => {
+        const checkboxes = grid.querySelectorAll('.day-checkbox');
+        const hiddenInput = grid.parentElement.querySelector('input[type="hidden"]');
+
+        checkboxes.forEach(checkbox => {
+          const day = checkbox.dataset.day;
+          const timeSelect = grid.querySelector(`.time-select[data-day="${day}"]`);
+
+          checkbox.addEventListener('change', function () {
+            if (this.checked) {
+              timeSelect.disabled = false;
+            } else {
+              timeSelect.disabled = true;
+              timeSelect.value = '';
+            }
+            updateHiddenField(grid, hiddenInput);
+          });
+
+          timeSelect.addEventListener('change', function () {
+            updateHiddenField(grid, hiddenInput);
+          });
+        });
+      });
+    }
+
+    // Update hidden field with JSON of day->time mappings
+    function updateHiddenField(grid, hiddenInput) {
+      const prefs = {};
+      const checkboxes = grid.querySelectorAll('.day-checkbox');
+
+      checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          const day = checkbox.dataset.day;
+          const timeSelect = grid.querySelector(`.time-select[data-day="${day}"]`);
+          prefs[day] = timeSelect.value || '';
+        }
+      });
+
+      hiddenInput.value = JSON.stringify(prefs);
+    }
+
+    // Initialize all functionality
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        setupSemesterToggles();
+        setupPreferenceToggles();
+        setupDayTimeControls();
+      });
+    } else {
+      setupSemesterToggles();
+      setupPreferenceToggles();
+      setupDayTimeControls();
+    }
   </script>
 </body>
+
 </html>
