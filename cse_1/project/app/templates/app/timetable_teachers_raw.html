@@ -713,7 +713,28 @@
     function setupDayTimeControls() {
       document.querySelectorAll('.day-time-grid').forEach(grid => {
         const checkboxes = grid.querySelectorAll('.day-checkbox');
-        const hiddenInput = grid.parentElement.querySelector('input[type="hidden"]');
+        // More accurate selection of the hidden input by querying within the same form-group or teacher-block
+        // Traverse upwards to find the closest teacher-block and then find hidden input with matching name
+        const teacherBlock = grid.closest('.teacher-block');
+        if (!teacherBlock) return;
+        
+        // Find all hidden inputs of the teacher-block
+        const hiddenInputs = teacherBlock.querySelectorAll('input[type="hidden"]');
+        let hiddenInput = null;
+
+        // We pick the hidden input whose name ends with the corresponding day_time_prefs field matching the current grid's id's semester part
+        // grid's id is like "day-time-grid-y1-1", so extract semester like y1
+        const gridId = grid.id || '';
+        const match = gridId.match(/day-time-grid-(y[123])-/);
+        if (match) {
+          const sem = match[1];
+          hiddenInput = Array.from(hiddenInputs).find(input => input.name.endsWith('day_time_prefs_' + sem));
+        }
+
+        if (!hiddenInput) {
+          // Fallback to first hidden input if none matched
+          hiddenInput = hiddenInputs[0];
+        }
 
         checkboxes.forEach(checkbox => {
           const day = checkbox.dataset.day;
@@ -734,6 +755,29 @@
           });
         });
       });
+
+      // On form submit, update all hidden inputs to latest values to avoid stale data
+      const form = document.getElementById('mainForm');
+      if (form) {
+        form.addEventListener('submit', function() {
+          document.querySelectorAll('.day-time-grid').forEach(grid => {
+            const teacherBlock = grid.closest('.teacher-block');
+            if (!teacherBlock) return;
+            const hiddenInputs = teacherBlock.querySelectorAll('input[type="hidden"]');
+            let hiddenInput = null;
+            const gridId = grid.id || '';
+            const match = gridId.match(/day-time-grid-(y[123])-/);
+            if (match) {
+              const sem = match[1];
+              hiddenInput = Array.from(hiddenInputs).find(input => input.name.endsWith('day_time_prefs_' + sem));
+            }
+            if (!hiddenInput) {
+              hiddenInput = hiddenInputs[0];
+            }
+            updateHiddenField(grid, hiddenInput);
+          });
+        });
+      }
     }
 
     // Update hidden field with JSON of day->time mappings

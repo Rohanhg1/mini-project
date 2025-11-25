@@ -6,25 +6,22 @@ import PyPDF2
 import logging
 from io import BytesIO
 
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.forms import formset_factory
+
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from django.http import HttpResponse
-from deap import base, creator, tools, algorithms
-import numpy as np
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
-from django.forms import formset_factory
-from django.views.decorators.csrf import csrf_exempt
+from .forms import TeacherForm, TotalTeachersForm, SeatingForm
 
-from .forms import SeatingForm, TotalTeachersForm, TeacherForm
-
-# ----------------------
-# Utility / Auth views
+TeacherFormSet = formset_factory(TeacherForm, extra=0)
 def user_login(request):
     error = None
     if request.method == 'POST':
@@ -159,73 +156,109 @@ def seating_arrangement(request):
 
 
 @login_required
+@login_required
 def download_seating_pdf(request):
     arrangement = request.session.get("seating_arrangement")
     students_per_bench = request.session.get("students_per_bench", 2)
     if not arrangement:
         return redirect('seating')
 
-    # Generate PDF for all rooms, each on a separate page, using full page
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
     buffer = BytesIO()
-    # Set small margins to use complete page
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=20, rightMargin=20, topMargin=20, bottomMargin=20)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=20,
+        bottomMargin=20
+    )
+
     elements = []
     styles = getSampleStyleSheet()
 
-    # Larger title style for better page utilization
+    # Title style
     title_style = styles['Title']
     title_style.fontSize = 18
-    title_style.alignment = 1  # Center
+    title_style.alignment = 1  # center
 
-    for i, (room, benches) in enumerate(arrangement):
+    # Decide column headers based on students_per_bench
+    if students_per_bench == 3:
+        col_headers = ["column 1 (left)", "column 2 (middle)", "column 3 (right)"]
+    elif students_per_bench == 2:
+        col_headers = ["column 1 (left)", "column 2 (right)"]
+    else:
+        col_headers = [f"Student {j+1}" for j in range(students_per_bench)]
+
+    headers = ['Bench'] + col_headers
+
+    # Page width for colWidths
+    page_width = 555  # approx usable width (A4 - margins)
+    bench_width = 60
+    student_width = (page_width - bench_width) / students_per_bench
+    colWidths = [bench_width] + [student_width] * students_per_bench
+
+    # Cell style for student cells
+    cell_style = ParagraphStyle(
+        'Cell',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=10
+    )
+
+    for room_index, (room, benches) in enumerate(arrangement):
+        # Room title
         elements.append(Paragraph(f"Seating Arrangement - Room {room}", title_style))
-        elements.append(Spacer(1, 12))  # Spacer
+        elements.append(Spacer(1, 12))
 
-        # Prepare table data
-        headers = ['Bench'] + [f'Student {j+1}' for j in range(students_per_bench)]
-        data = [headers]
-        for bench, students in benches:
-            row = [str(bench)]
-            for s in students:
-                if s:
-                    parts = s.split(' ', 1)
-                    usn = parts[0]
-                    name = parts[1] if len(parts) > 1 else ''
-                    cell_text = f"{usn}<br/>{name}" if name else usn
-                    # Larger font for cells
-                    cell_style = ParagraphStyle('Cell', parent=styles['Normal'], fontSize=10, leading=10)
-                    row.append(Paragraph(cell_text, cell_style))
-                else:
-                    row.append('')
-            data.append(row)
+        # ✅ make sure bench numbers are in order
+        benches_sorted = sorted(benches, key=lambda x: x[0])
 
-        # Calculate colWidths to fill the page width (A4 width ~595, minus margins 20+20=40, so ~555 available)
-        page_width = 555  # Approximate usable width
-        num_cols = 1 + students_per_bench
-        bench_width = 60  # Fixed width for Bench column
-        student_width = (page_width - bench_width) / students_per_bench
-        colWidths = [bench_width] + [student_width] * students_per_bench
+        # ✅ create a SEPARATE TABLE for every 5 benches
+        for start in range(0, len(benches_sorted), 5):
+            chunk = benches_sorted[start:start + 5]
 
-        # Create table with adjusted widths and larger fonts
-        table = Table(data, colWidths=colWidths)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 0), (-1, 0), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-        ]))
-        elements.append(table)
+            data = [headers]
 
-        # Add page break if not the last room
-        if i < len(arrangement) - 1:
+            for bench_num, students in chunk:
+                row = [str(bench_num)]
+                for s in students:
+                    if s:
+                        parts = s.split(' ', 1)
+                        usn = parts[0]
+                        name = parts[1] if len(parts) > 1 else ''
+                        cell_text = f"{usn}<br/>{name}" if name else usn
+                        row.append(Paragraph(cell_text, cell_style))
+                    else:
+                        row.append('')
+                data.append(row)
+
+            table = Table(data, colWidths=colWidths)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ]))
+
+            elements.append(table)
+            elements.append(Spacer(1, 16))  # space between groups of 5 benches
+
+        # Page break between rooms
+        if room_index < len(arrangement) - 1:
             elements.append(PageBreak())
 
     doc.build(elements)
@@ -233,6 +266,7 @@ def download_seating_pdf(request):
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="seating_arrangement.pdf"'
     return response
+
 
 
 # ----------------------
@@ -366,6 +400,14 @@ def timetable_teachers(request):
                         day_time_prefs = json.loads(day_time_json) if day_time_json else {}
                     except:
                         day_time_prefs = {}
+                    
+                    # DEBUG: Print what we received
+                    if has_pref or day_time_prefs:
+                        print(f"\n🔍 DEBUG: Preference data for {name} - Year 1:")
+                        print(f"   has_preference_y1: {has_pref}")
+                        print(f"   day_time_prefs_y1 JSON: {day_time_json}")
+                        print(f"   Parsed preferences: {day_time_prefs}")
+                    
                     # Allow lab-only subjects (hours may be zero) — set is_lab/is_external accordingly
                     if hrs > 0:
                         entries.append({"teacher": name, "year": 1, "subject": subj, "hours": hrs, "is_integrated": integrated, "is_lab": False, "is_external_lab": ext, "remaining": hrs, "day_time_prefs": day_time_prefs if has_pref else {}})
@@ -712,563 +754,441 @@ def download_teacher_timetable_pdf(request, teacher_name):
 
 
 # ----------------------
-# TIMETABLE ALLOCATION WITH GENETIC ALGORITHM
+# TIMETABLE ALLOCATION WITH GOOGLE OR-TOOLS (CP-SAT)
 # ----------------------
-# TIMETABLE ALLOCATION WITH SMART GA/HEURISTICS (A2-Priority-3, Reinsert-YES)
 def allocate_timetable_with_ga(entries_input):
+    """
+    Allocates timetable using Constraint Programming (Google OR-Tools).
+    Guarantees strict adherence to:
+    1. Teacher availability (no double booking)
+    2. Rest periods (no consecutive classes)
+    3. Lab block validity
+    4. Single class per slot per year
+    """
     import copy
+    from ortools.sat.python import cp_model
+    
     entries = copy.deepcopy(entries_input)
+    model = cp_model.CpModel()
 
-    # Defensive defaults (use module-level ones if present)
-    try:
-        PERIODS
-    except NameError:
-        PERIODS = [f"P{i}" for i in range(9)]
-    try:
-        DAYS
-    except NameError:
-        DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    try:
-        SCHEDULABLE_PERIOD_INDICES
-    except NameError:
-        SCHEDULABLE_PERIOD_INDICES = [0, 1, 3, 4, 6, 7, 8]
+    # --- Constants & Data Prep ---
+    PERIODS = [0, 1, 2, 3, 4, 5, 6, 7, 8]  # Internal indices
+    TEACHING_PERIODS = [0, 1, 3, 4, 6, 7, 8] # Periods where classes can happen
+    DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    
+    # Map periods to next rest period
+    # 0->1, 1->3, 3->4, 4->6, 6->7, 7->8, 8->None
+    NEXT_REST_MAP = {0: 1, 1: 3, 3: 4, 4: 6, 6: 7, 7: 8, 8: None}
 
-    LAB_SLOTS = [(0, 1), (3, 4), (6, 7, 8)]
-    LAB_SLOT_LENGTH = {(0, 1): 2, (3, 4): 2, (6, 7, 8): 3}
-    LAB_STARTS = [slot[0] for slot in LAB_SLOTS]
-
-    # ---------------- NORMALIZE ENTRIES ----------------
-    years_set = set()
+    # Extract Years and Teachers
+    years = sorted(list(set(int(e.get("year", 1)) for e in entries)))
+    teachers = sorted(list(set(e['teacher'] for e in entries)))
+    
+    # Organize entries by ID for easy access
+    # Split entries into Theory and Lab components
+    theory_reqs = [] # (entry_idx, year, teacher, subject, hours, prefs)
+    lab_reqs = []    # (entry_idx, year, teacher, subject, duration, prefs)
+    
     for i, e in enumerate(entries):
-        try:
-            y_int = int(e.get("year", 1))
-        except Exception:
-            y_int = 1
-        e["year"] = y_int
-        years_set.add(y_int)
-
-        # flags
-        e["is_integrated"] = bool(e.get("is_integrated")) or \
-                             ("integrated" in (e.get("subject") or "").lower())
-        e["is_lab"] = bool(e.get("is_lab", False))
-        e["is_external_lab"] = bool(e.get("is_external_lab", False))
-
-        base_hours = int(e.get("hours", 0) or 0)
-
-        if e["is_integrated"]:
-            # integrated: user gave theory hours; lab is extra and mandatory
-            e["theory_remaining"] = base_hours
-            e["lab_needed"] = True
-            e["lab_length"] = 3 if e["is_external_lab"] else 2
-            e["lab_remaining"] = e["lab_length"]
-        else:
-            # non-integrated
-            if e.get("is_lab") or e.get("is_external_lab"):
-                # lab checkbox means there is a lab even if hours == 0
-                e["lab_needed"] = True
-                e["lab_length"] = 3 if e.get("is_external_lab") else 2
-                e["lab_remaining"] = e["lab_length"]
-                # keep theory only if there are separate theory hours
-                e["theory_remaining"] = base_hours if base_hours > 0 and not (
-                    e.get("is_lab") or e.get("is_external_lab")
-                ) else 0
-            else:
-                # pure theory subject
-                e["lab_needed"] = False
-                e["lab_length"] = 0
-                e["lab_remaining"] = 0
-                e["theory_remaining"] = base_hours
-
-        e["id"] = i
-
-    years = sorted(list(years_set)) if years_set else [1, 2, 3]
-
-    timetables = {y: {d: [None] * len(PERIODS) for d in DAYS} for y in years}
-
-    # trackers
-    teacher_occupied = {}
-    for e in entries:
-        teacher_occupied.setdefault(e['teacher'], set())
-    subject_scheduled_one_week = {y: set() for y in years}
-    subject_day_assigned = {}
-    teacher_first_period_last_day = {}
-    subject_period_used = {y: {} for y in years}
-
-    def teacher_free(teacher, day, p):
-        return (day, p) not in teacher_occupied.get(teacher, set())
-
-    def lab_exists_on_day(year, day):
-        """Check if a lab is already placed for that year & day."""
-        row = timetables[year][day]
-        for cell in row:
-            if cell is not None and isinstance(cell, str) and cell.endswith(" - Lab"):
-                return True
-        return False
-
-    # global queue for overridden theory reinsertion
-    removed_theory_queue = []
-
-    # ---------------- LAB CANDIDATE (A2 PRIORITY-3) ----------------
-    def find_lab_candidate(year, day_idx, day, start_p_idx):
-        cand = []
-        for e in entries:
-            if e["year"] != year:
-                continue
-            if e.get("lab_needed", False) and int(e.get("lab_remaining", 0)) > 0:
-                cand.append(e)
-
-        # sort: integrated+external first, then by total remaining load
-        cand.sort(
-            key=lambda x: (
-                1 if (x.get("is_integrated", False) and x.get("is_external_lab", False)) else 0,
-                x.get("theory_remaining", 0) + x.get("lab_remaining", 0)
-            ),
-            reverse=True
-        )
-
-        for e in cand:
-            subj = e.get("subject")
-            teacher = e.get("teacher")
-            lab_len = int(e.get("lab_length", 0))
-
-            if subj in subject_scheduled_one_week[year]:
-                continue
-            if subj in subject_day_assigned.get((year, day), set()):
-                continue
-            used_periods = subject_period_used[year].get(subj, set())
-            if lab_len not in (2, 3):
-                continue
-
-            # slot priority
-            if e.get("is_integrated", False) and e.get("is_external_lab", False):
-                slot_priority = [(6, 7, 8)]
-            elif e.get("is_integrated", False):
-                slot_priority = [(0, 1), (3, 4)]
-            else:
-                slot_priority = [(0, 1), (3, 4), (6, 7, 8)]
-
-            for slot in slot_priority:
-                if slot[0] != start_p_idx:
-                    continue
-                if len(slot) != lab_len:
-                    continue
-
-                # STEP 1: clean placement (no override)
-                clean_ok = True
-                for p in slot:
-                    if p not in SCHEDULABLE_PERIOD_INDICES or p >= len(PERIODS):
-                        clean_ok = False
-                        break
-                    if timetables[year][day][p] is not None:
-                        clean_ok = False
-                        break
-                    if not teacher_free(teacher, day, p):
-                        clean_ok = False
-                        break
-                    if p in used_periods:
-                        clean_ok = False
-                        break
-                if clean_ok:
-                    return e, slot
-
-                # STEP 2: smart override only theory (Priority-3)
-                override_possible = True
-                theory_to_reinsert = []
-
-                for p in slot:
-                    cell = timetables[year][day][p]
-                    if cell is None:
-                        continue
-                    if isinstance(cell, str) and cell.endswith(" - Lab"):
-                        override_possible = False
-                        break
-                    theory_sub = cell
-                    # only override if that theory appears elsewhere
-                    if len(subject_period_used[year].get(theory_sub, set())) == 0:
-                        override_possible = False
-                        break
-                    theory_to_reinsert.append((p, theory_sub))
-
-                if override_possible:
-                    for p, theory_sub in theory_to_reinsert:
-                        timetables[year][day][p] = None
-                        removed_theory_queue.append((year, theory_sub))
-                    return e, slot
-
-        return None, None
-
-    # ---------------- THEORY CANDIDATE ----------------
-    def find_normal_candidate(year, day_idx, day, p_idx):
-        cand = []
-        for e in entries:
-            if e["year"] != year:
-                continue
-            avail = int(e.get("theory_remaining", 0))
-            if avail <= 0:
-                continue
-            subj = e.get("subject")
-            if subj in subject_day_assigned.get((year, day), set()):
-                continue
-            used_periods = subject_period_used[year].get(subj, set())
-            if p_idx in used_periods:
-                continue
-            if not teacher_free(e["teacher"], day, p_idx):
-                continue
-            if p_idx == 0:
-                last = teacher_first_period_last_day.get(e["teacher"])
-                if last is not None and last == day_idx - 1:
-                    continue
-            cand.append(e)
-        if not cand:
-            return None
+        y = int(e.get("year", 1))
+        t = e['teacher']
+        s = e['subject']
+        prefs = e.get('day_time_prefs', {})
         
-        # Helper function to check if period and day match day-specific time preferences
-        def matches_preference(entry, period_idx, current_day):
-            day_time_prefs = entry.get('day_time_prefs', {})
-            # Bonus for matching a preferred day (even if time not specified)
-            if current_day in day_time_prefs:
-                pref_time = day_time_prefs[current_day]
-                # If a specific time is set, check for exact period match
-                if pref_time:
-                    try:
-                        pref_period = int(pref_time)
-                        if pref_period == period_idx:
-                            return 10  # Day + time match (5+5)
-                    except (ValueError, TypeError):
-                        pass
-                # Day is preferred but time is any or not matching -> partial bonus
-                return 5  # Day match only
-            # No preference for this day
-            return 0
+        # Theory Component
+        # IMPORTANT: For integrated subjects (with or without external), 
+        # the 'hours' field represents ONLY theory hours.
+        # Labs are allocated separately and do NOT consume theory hours.
+        th_hours = 0
+        if e.get("is_integrated") or e.get("is_integrated") and e.get("is_external_lab"):
+            # Integrated subjects: 'hours' = theory hours only
+            th_hours = int(e.get("hours", 0))
+        elif not (e.get("is_lab") or e.get("is_external_lab")):
+            # Pure theory subjects (no lab component)
+            th_hours = int(e.get("hours", 0))
+        # Note: For pure lab subjects (is_lab=True but not integrated), 
+        # th_hours stays 0 as all time is in lab
         
-        # Sort by: preference match (higher is better) + remaining hours (higher is better)
-        cand.sort(
-            key=lambda x: (
-                matches_preference(x, p_idx, day),  # Preference bonus (0 or 10)
-                x.get("theory_remaining", 0) + x.get("lab_remaining", 0)  # Existing priority
-            ),
-            reverse=True
-        )
-        return cand[0]
-
-    # ---------------- MAIN PASS: LABS THEN THEORY ----------------
-    for y in years:
-        for day_idx, day in enumerate(DAYS):
-            subject_day_assigned.setdefault((y, day), set())
-
-            # lab starts
-            for start_idx in LAB_STARTS:
-                if start_idx not in SCHEDULABLE_PERIOD_INDICES:
-                    continue
-                if timetables[y][day][start_idx] is not None:
-                    continue
-                if lab_exists_on_day(y, day):
-                    continue
-
-                lab_e, lab_slot = find_lab_candidate(y, day_idx, day, start_idx)
-                if lab_e and lab_slot:
-                    label = f"{lab_e['subject']} - Lab"
-                    for p in lab_slot:
-                        timetables[y][day][p] = label
-                    deduct = LAB_SLOT_LENGTH.get(tuple(lab_slot), len(lab_slot))
-                    lab_e["lab_remaining"] = int(lab_e.get("lab_remaining", 0)) - deduct
-                    if lab_e["lab_remaining"] <= 0:
-                        lab_e["lab_needed"] = False
-                    subject_scheduled_one_week[y].add(lab_e['subject'])
-                    subject_day_assigned[(y, day)].add(lab_e['subject'])
-                    subject_period_used[y].setdefault(lab_e['subject'], set()).update(lab_slot)
-                    teacher_occupied.setdefault(lab_e['teacher'], set()).update(
-                        [(day, p) for p in lab_slot]
-                    )
-                    if lab_slot[0] == 0:
-                        teacher_first_period_last_day[lab_e['teacher']] = day_idx
-
-            # single-hour theory
-            for p_idx in SCHEDULABLE_PERIOD_INDICES:
-                if timetables[y][day][p_idx] is not None:
-                    continue
-                normal = find_normal_candidate(y, day_idx, day, p_idx)
-                if normal:
-                    timetables[y][day][p_idx] = normal['subject']
-                    normal["theory_remaining"] = int(normal.get("theory_remaining", 0)) - 1
-                    teacher_occupied.setdefault(normal['teacher'], set()).add((day, p_idx))
-                    subject_day_assigned[(y, day)].add(normal['subject'])
-                    subject_period_used[y].setdefault(normal['subject'], set()).add(p_idx)
-                    if p_idx == 0:
-                        teacher_first_period_last_day[normal['teacher']] = day_idx
-
-    # ---------------- SECOND PASS: REMAINING LABS ----------------
-    for y in years:
-        for day_idx, day in enumerate(DAYS):
-            for slot_tuple in LAB_SLOTS:
-                a = slot_tuple[0]
-                if a not in SCHEDULABLE_PERIOD_INDICES:
-                    continue
-                if timetables[y][day][a] is not None:
-                    continue
-                if lab_exists_on_day(y, day):
-                    continue
-
-                lab_e, lab_slot = find_lab_candidate(y, day_idx, day, a)
-                if lab_e and lab_slot:
-                    label = f"{lab_e['subject']} - Lab"
-                    for p in lab_slot:
-                        timetables[y][day][p] = label
-                    deduct = LAB_SLOT_LENGTH.get(tuple(lab_slot), len(lab_slot))
-                    lab_e["lab_remaining"] = int(lab_e.get("lab_remaining", 0)) - deduct
-                    if lab_e["lab_remaining"] <= 0:
-                        lab_e["lab_needed"] = False
-                    subject_scheduled_one_week[y].add(lab_e['subject'])
-                    subject_day_assigned[(y, day)].add(lab_e['subject'])
-                    subject_period_used[y].setdefault(lab_e['subject'], set()).update(lab_slot)
-                    teacher_occupied.setdefault(lab_e['teacher'], set()).update(
-                        [(day, p) for p in lab_slot]
-                    )
-                    if lab_slot[0] == 0:
-                        teacher_first_period_last_day[lab_e['teacher']] = day_idx
-
-    # ---------------- THIRD PASS: FILL THEORY, RESERVE LAST LAB SLOTS ----------------
-    has_unplaced_labs = any(
-        e.get("lab_needed", False) and int(e.get("lab_remaining", 0)) > 0
-        for e in entries
-    )
-
-    try:
-        LAST_LAB_SLOTS
-    except NameError:
-        LAST_LAB_SLOTS = [6, 7, 8]
-
-    for y in years:
-        for day_idx, day in enumerate(DAYS):
-            for p in SCHEDULABLE_PERIOD_INDICES:
-                if timetables[y][day][p] is not None:
-                    continue
-                if has_unplaced_labs and p in LAST_LAB_SLOTS:
-                    continue
-                cand = find_normal_candidate(y, day_idx, day, p)
-                if cand:
-                    timetables[y][day][p] = cand['subject']
-                    cand["theory_remaining"] = int(cand.get("theory_remaining", 0)) - 1
-                    teacher_occupied.setdefault(cand['teacher'], set()).add((day, p))
-                    subject_day_assigned[(y, day)].add(cand['subject'])
-                    if p == 0:
-                        teacher_first_period_last_day[cand['teacher']] = day_idx
-
-    # ---------------- FINAL PASS: FILL WITH TUTORIAL (EXCEPT RESERVED LAST LAB) ----------------
-    for y in years:
-        for d in DAYS:
-            for p in SCHEDULABLE_PERIOD_INDICES:
-                if timetables[y][d][p] is None:
-                    if not (has_unplaced_labs and p in LAST_LAB_SLOTS):
-                        timetables[y][d][p] = "Tutorial"
-
-    # ---------------- LAST-CHANCE LABS INTO TUTORIAL SLOTS ----------------
-    for y in years:
-        for e in entries:
-            if e.get("year") != y:
-                continue
-            if not e.get("lab_needed", False) or int(e.get("lab_remaining", 0)) <= 0:
-                continue
-            lab_len = int(e.get("lab_length", 0))
-            if lab_len not in (2, 3):
-                continue
-            subj = e['subject']
-            teacher = e['teacher']
-
-            possible_slots = [(6, 7, 8)] if lab_len == 3 else [(0, 1), (3, 4)]
-            placed = False
-            for day_idx, day in enumerate(DAYS):
-                if lab_exists_on_day(y, day):
-                    continue
-                for slot in possible_slots:
-                    if any(p >= len(PERIODS) for p in slot):
-                        continue
-                    conflict = False
-                    used_periods = subject_period_used.get(y, {}).get(subj, set())
-                    for p in slot:
-                        if p not in SCHEDULABLE_PERIOD_INDICES:
-                            conflict = True; break
-                        cell = timetables[y][day][p]
-                        if cell is not None and cell != "Tutorial":
-                            conflict = True; break
-                        if (day, p) in teacher_occupied.get(teacher, set()):
-                            conflict = True; break
-                        if p == 0:
-                            last = teacher_first_period_last_day.get(teacher)
-                            if last is not None and last == day_idx - 1:
-                                conflict = True; break
-                        if p in used_periods:
-                            conflict = True; break
-                    if conflict:
-                        continue
-                    label = f"{subj} - Lab"
-                    for p in slot:
-                        timetables[y][day][p] = label
-                    teacher_occupied.setdefault(teacher, set()).update(
-                        [(day, p) for p in slot]
-                    )
-                    if slot[0] == 0:
-                        teacher_first_period_last_day[teacher] = day_idx
-                    subject_scheduled_one_week[y].add(subj)
-                    subject_day_assigned.setdefault((y, day), set()).add(subj)
-                    subject_period_used[y].setdefault(subj, set()).update(slot)
-                    deduct = LAB_SLOT_LENGTH.get(tuple(slot), len(slot))
-                    e["lab_remaining"] = int(e.get("lab_remaining", 0)) - deduct
-                    if e["lab_remaining"] <= 0:
-                        e["lab_needed"] = False
-                    placed = True
-                    break
-                if placed:
-                    break
-
-    # ---------------- REINSERT OVERRIDDEN THEORY ----------------
-    for year, subj in removed_theory_queue:
-        placed = False
-        for day_idx, day in enumerate(DAYS):
-            if placed:
-                break
-            for p in SCHEDULABLE_PERIOD_INDICES:
-                if timetables[year][day][p] is None:
-                    timetables[year][day][p] = subj
-                    subject_period_used[year].setdefault(subj, set()).add(p)
-                    subject_day_assigned.setdefault((year, day), set()).add(subj)
-                    placed = True
-                    break
-
-    # ---------------- MAKE FIRST 3 PERIODS CONTINUOUS (WITHIN DAY) ----------------
-    # First 3 teaching periods: indices 0, 1, 3
-    for y in years:
-        for day in DAYS:
-            row = timetables[y][day]
-            if not row:
-                continue
-
-            first_slots = [idx for idx in [0, 1, 3] if idx < len(row)]
-            later_slots = [idx for idx in SCHEDULABLE_PERIOD_INDICES
-                           if idx not in first_slots and idx < len(row)]
-
-            for p in first_slots:
-                # already a real class OR lab -> don't touch
-                if row[p] is not None and row[p] != "Tutorial":
-                    continue
-
-                # pull a REAL *non-lab* class from later slots of same day
-                for q in later_slots:
-                    cell = row[q]
-                    if cell is None or cell == "Tutorial":
-                        continue
-                    # don't break lab blocks – skip lab cells
-                    if isinstance(cell, str) and cell.endswith(" - Lab"):
-                        continue
-                    # swap theory/normal subject into early period
-                    row[p], row[q] = row[q], row[p]
-                    break
-
-    # ---------------- BALANCE ACROSS WEEK: FILL WEAK DAYS (LIKE FRIDAY) ----------------
-    for y in years:
-        # compute counts in first 3 for each day
-        def day_count(day_name):
-            r = timetables[y][day_name]
-            fslots = [idx for idx in [0, 1, 3] if idx < len(r)]
-            return sum(1 for p in fslots if r[p] is not None and r[p] != "Tutorial")
-
-        # try to move single periods from heavy days to light days
-        changed = True
-        while changed:
-            changed = False
-            # days sorted by first-3 load
-            days_sorted = sorted(DAYS, key=day_count)
-            low = days_sorted[0]
-            high = days_sorted[-1]
-            low_cnt = day_count(low)
-            high_cnt = day_count(high)
-
-            # stop if fairly balanced or no difference
-            if high_cnt <= low_cnt or low_cnt >= 3:
-                break
-
-            row_low = timetables[y][low]
-            row_high = timetables[y][high]
-            first_low = [idx for idx in [0, 1, 3] if idx < len(row_low)]
-            first_high = [idx for idx in [0, 1, 3] if idx < len(row_high)]
-
-            # find an empty/Tutorial slot in low day's first 3
-            target_p = None
-            for p in first_low:
-                if row_low[p] is None or row_low[p] == "Tutorial":
-                    target_p = p
-                    break
-            if target_p is None:
-                break
-
-            # choose a donor slot from high day:
-            donor_p = None
-            for p in [idx for idx in SCHEDULABLE_PERIOD_INDICES if idx < len(row_high)]:
-                if p in first_high:
-                    continue  # don't break continuity there
-                cell = row_high[p]
-                if cell is None or cell == "Tutorial":
-                    continue
-                if isinstance(cell, str) and cell.endswith(" - Lab"):
-                    continue  # don't move labs across days
-                donor_p = p
-                break
-
-            if donor_p is None:
-                break
-
-            # move subject: high -> low
-            row_low[target_p] = row_high[donor_p]
-            row_high[donor_p] = "Tutorial"
-            changed = True
-
-    # ---------------- MAKE AFTERNOON PERIODS CONTINUOUS (WITHIN DAY) ----------------
-    # Afternoon teaching periods: 5th, 6th, 7th -> indices 6, 7, 8
-    for y in years:
-        for day in DAYS:
-            row = timetables[y][day]
-            if not row:
-                continue
-
-            aft_slots = [idx for idx in [6, 7, 8] if idx < len(row)]
-
-            for p in aft_slots:
-                cell = row[p]
-                # already a real class OR lab -> don't touch
-                if cell is not None and cell != "Tutorial":
-                    continue
-
-                # pull a REAL *non-lab* class from later afternoon slots of same day
-                for q in aft_slots:
-                    if q <= p:
-                        continue
-                    c2 = row[q]
-                    if c2 is None or c2 == "Tutorial":
-                        continue
-                    # do not move lab cells, to keep labs continuous
-                    if isinstance(c2, str) and c2.endswith(" - Lab"):
-                        continue
-                    # swap theory/normal subject into earlier afternoon period
-                    row[p], row[q] = row[q], row[p]
-                    break
-
-    # ---------------- UNALLOCATED SUMMARY ----------------
-    unallocated = []
-    for e in entries:
-        theory_left = int(e.get("theory_remaining", 0))
-        lab_left = int(e.get("lab_remaining", 0))
-        if theory_left > 0 or lab_left > 0 or e.get("lab_needed", False):
-            unallocated.append({
-                "id": e["id"],
-                "subject": e.get("subject"),
-                "teacher": e.get("teacher"),
-                "year": e.get("year"),
-                "theory_remaining": theory_left,
-                "lab_remaining": lab_left,
-                "lab_needed": bool(e.get("lab_needed", False)),
-                "is_integrated": bool(e.get("is_integrated", False)),
-                "is_external_lab": bool(e.get("is_external_lab", False)),
-                "lab_length": int(e.get("lab_length", 0)),
+        if th_hours > 0:
+            theory_reqs.append({
+                'id': i, 'year': y, 'teacher': t, 'subject': s, 
+                'hours': th_hours, 'prefs': prefs
             })
 
-    return timetables, unallocated
+        # Lab Component
+        # Labs are allocated if: is_lab OR is_external_lab OR is_integrated
+        # For integrated subjects, lab allocation is INDEPENDENT of theory hours
+        is_lab = e.get("is_lab") or e.get("is_external_lab") or e.get("is_integrated")
+        if is_lab:
+            lab_dur = 3 if e.get("is_external_lab") else 2
+            lab_reqs.append({
+                'id': i, 'year': y, 'teacher': t, 'subject': s, 
+                'duration': lab_dur, 'prefs': prefs,
+                'is_integrated': e.get("is_integrated", False),
+                'is_external_lab': e.get("is_external_lab", False)
+            })
+
+    # --- Variables ---
+    # theory_vars[(req_idx, day, period)] = bool
+    theory_vars = {} 
+    # lab_vars[(req_idx, day, start_period)] = bool
+    lab_vars = {}
+    
+    # 1. Create Theory Variables
+    for r_idx, req in enumerate(theory_reqs):
+        for d in DAYS:
+            for p in TEACHING_PERIODS:
+                theory_vars[(r_idx, d, p)] = model.NewBoolVar(f'T_{r_idx}_{d}_{p}')
+
+    # 2. Create Lab Variables
+    for r_idx, req in enumerate(lab_reqs):
+        dur = req['duration']
+        valid_starts = []
+        if dur == 2:
+            valid_starts = [0, 3, 6, 7]
+        elif dur == 3:
+            valid_starts = [0, 3, 6]
+            
+        for d in DAYS:
+            for p in valid_starts:
+                lab_vars[(r_idx, d, p)] = model.NewBoolVar(f'L_{r_idx}_{d}_{p}')
+
+    # --- Constraints ---
+
+    # C1. Subject Hours (Theory)
+    for r_idx, req in enumerate(theory_reqs):
+        model.Add(sum(theory_vars[(r_idx, d, p)] for d in DAYS for p in TEACHING_PERIODS) == req['hours'])
+
+    # C2. Subject Hours (Lab) - Exactly one slot per lab requirement
+    for r_idx, req in enumerate(lab_reqs):
+        valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
+        model.Add(sum(lab_vars[(r_idx, d, p)] for d in DAYS for p in valid_starts) == 1)
+
+    # C3. Single Class per Year/Day/Period
+    for y in years:
+        for d in DAYS:
+            for p in TEACHING_PERIODS:
+                # Gather all theory vars for this y,d,p
+                active_vars = []
+                for r_idx, req in enumerate(theory_reqs):
+                    if req['year'] == y:
+                        active_vars.append(theory_vars[(r_idx, d, p)])
+                
+                # Gather all lab vars that COVER this p
+                for r_idx, req in enumerate(lab_reqs):
+                    if req['year'] == y:
+                        dur = req['duration']
+                        valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                        for start in valid_starts:
+                            covers_p = False
+                            if start == 0:
+                                if dur == 2: covers_p = (p in [0, 1])
+                                else: covers_p = (p in [0, 1, 3]) 
+                            elif start == 3:
+                                if dur == 2: covers_p = (p in [3, 4])
+                                else: covers_p = (p in [3, 4, 6])
+                            elif start == 6:
+                                if dur == 2: covers_p = (p in [6, 7])
+                                else: covers_p = (p in [6, 7, 8])
+                            elif start == 7: 
+                                covers_p = (p in [7, 8])
+                                
+                            if covers_p:
+                                active_vars.append(lab_vars[(r_idx, d, start)])
+                
+                model.Add(sum(active_vars) <= 1)
+
+    # C5. Integrated + External Labs MUST be in 2:30-5:00 PM slot (period 6 start only)
+    # If a subject is both integrated AND external, its lab can ONLY start at period 6
+    for r_idx, req in enumerate(lab_reqs):
+        if req.get('is_integrated') and req.get('is_external_lab'):
+            # This lab MUST start at period 6 (the 2:30-5:00 slot)
+            # Force all other start periods to be 0
+            valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
+            for d in DAYS:
+                for p in valid_starts:
+                    if p != 6:  # Only period 6 is allowed
+                        model.Add(lab_vars[(r_idx, d, p)] == 0)
+    
+    # C5b. Integrated-ONLY Labs (not external) MUST be in morning/midday slots
+    # If a subject is integrated but NOT external, its lab can ONLY start at period 0 or 3
+    # (9:00-11:00 or 11:15-1:15, excluding the afternoon 2:30-5:00 slot)
+    for r_idx, req in enumerate(lab_reqs):
+        if req.get('is_integrated') and not req.get('is_external_lab'):
+            # This lab can ONLY start at period 0 or 3 (morning/midday slots)
+            # Force afternoon start periods (6, 7) to be 0
+            valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
+            for d in DAYS:
+                for p in valid_starts:
+                    if p not in [0, 3]:  # Only periods 0 and 3 are allowed
+                        model.Add(lab_vars[(r_idx, d, p)] == 0)
+    
+    # C6. Only one theory class per subject per day
+    # Group theory_reqs by (year, subject)
+    subject_theory_map = {}  # (year, subject) -> [list of r_idx]
+    for r_idx, req in enumerate(theory_reqs):
+        key = (req['year'], req['subject'])
+        if key not in subject_theory_map:
+            subject_theory_map[key] = []
+        subject_theory_map[key].append(r_idx)
+    
+    # For each subject, ensure at most 1 theory class per day
+    for (year, subject), req_indices in subject_theory_map.items():
+        for d in DAYS:
+            # Sum all theory vars for this subject on this day
+            day_vars = []
+            for r_idx in req_indices:
+                for p in TEACHING_PERIODS:
+                    day_vars.append(theory_vars[(r_idx, d, p)])
+            # At most 1 theory class for this subject on this day
+            model.Add(sum(day_vars) <= 1)
+
+    # C4. Teacher Availability & Rest Periods
+    for t in teachers:
+        for d in DAYS:
+            for p in TEACHING_PERIODS:
+                # 1. Is teacher busy at p?
+                busy_vars = []
+                
+                # Theory
+                for r_idx, req in enumerate(theory_reqs):
+                    if req['teacher'] == t:
+                        busy_vars.append(theory_vars[(r_idx, d, p)])
+                
+                # Labs
+                for r_idx, req in enumerate(lab_reqs):
+                    if req['teacher'] == t:
+                        dur = req['duration']
+                        valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                        for start in valid_starts:
+                            covers_p = False
+                            if start == 0: covers_p = (p in ([0, 1] if dur==2 else [0, 1, 3]))
+                            elif start == 3: covers_p = (p in ([3, 4] if dur==2 else [3, 4, 6]))
+                            elif start == 6: covers_p = (p in ([6, 7] if dur==2 else [6, 7, 8]))
+                            elif start == 7: covers_p = (p in [7, 8])
+                            
+                            if covers_p:
+                                busy_vars.append(lab_vars[(r_idx, d, start)])
+                
+                # Constraint: Teacher busy at most once at p
+                is_busy = model.NewBoolVar(f'Busy_{t}_{d}_{p}')
+                model.Add(sum(busy_vars) == is_busy)
+                
+                # 2. Rest Period Constraint
+                # If is_busy is true, then teacher CANNOT be busy at next_period
+                # unless it's part of the SAME lab block.
+                # But we handle this by checking who forces a rest.
+                
+                rest_vars = [] # Variables that force a rest at 'p'
+                
+                # Theory at 'prev' forces rest at 'p' if NEXT_REST_MAP[prev] == p
+                for prev in TEACHING_PERIODS:
+                    if NEXT_REST_MAP.get(prev) == p:
+                        for r_idx, req in enumerate(theory_reqs):
+                            if req['teacher'] == t:
+                                rest_vars.append(theory_vars[(r_idx, d, prev)])
+                
+                # Lab ending before 'p' forces rest at 'p'
+                for r_idx, req in enumerate(lab_reqs):
+                    if req['teacher'] == t:
+                        dur = req['duration']
+                        valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                        for start in valid_starts:
+                            last_p = -1
+                            if start == 0: last_p = 1 if dur==2 else 3
+                            elif start == 3: last_p = 4 if dur==2 else 6
+                            elif start == 6: last_p = 7 if dur==2 else 8
+                            elif start == 7: last_p = 8
+                            
+                            if NEXT_REST_MAP.get(last_p) == p:
+                                rest_vars.append(lab_vars[(r_idx, d, start)])
+
+                # Constraint: If any variable in rest_vars is True, then is_busy must be False
+                model.Add(sum(rest_vars) + is_busy <= 1)
+
+    # C7. Morning Periods Must Be Filled
+    # For every semester (year) on every working day, the first 3 periods MUST be filled
+    # First 3 periods = Period 0 (9:00-10:00), Period 1 (10:00-11:00), Period 3 (11:15-12:15)
+    # Note: Period 2 is Break, so we skip it
+    MORNING_PERIODS = [0, 1, 3]
+    
+    for y in years:
+        for d in DAYS:
+            for p in MORNING_PERIODS:
+                # At least one class must be scheduled in this morning period
+                active_vars = []
+                
+                # Collect all theory vars for this year/day/period
+                for r_idx, req in enumerate(theory_reqs):
+                    if req['year'] == y:
+                        active_vars.append(theory_vars[(r_idx, d, p)])
+                
+                # Collect all lab vars that COVER this period
+                for r_idx, req in enumerate(lab_reqs):
+                    if req['year'] == y:
+                        dur = req['duration']
+                        valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                        for start in valid_starts:
+                            covers_p = False
+                            if start == 0:
+                                if dur == 2: covers_p = (p in [0, 1])
+                                else: covers_p = (p in [0, 1, 3])
+                            elif start == 3:
+                                if dur == 2: covers_p = (p in [3, 4])
+                                else: covers_p = (p in [3, 4, 6])
+                            
+                            if covers_p:
+                                active_vars.append(lab_vars[(r_idx, d, start)])
+                
+                # Constraint: Morning period MUST have at least 1 class
+                model.Add(sum(active_vars) >= 1)
+
+    # C8. Afternoon Periods Must Be Filled in Order (Sequential)
+    # Afternoon periods must be filled sequentially from period 6 onwards.
+    # Afternoon periods: 6 (2:30-3:20), 7 (3:20-4:15), 8 (4:15-5:00)
+    # Rules:
+    #   - If period 7 is occupied, period 6 MUST also be occupied
+    #   - If period 8 is occupied, periods 6 AND 7 MUST also be occupied
+    # This ensures patterns like: [P6], [P6,P7], [P6,P7,P8], or [empty]
+    # NOT allowed: [P7], [P8], [P7,P8], [P6,P8]
+    AFTERNOON_PERIODS = [6, 7, 8]
+    
+    for y in years:
+        for d in DAYS:
+            # Check if period 6 has a class
+            period_6_vars = []
+            for r_idx, req in enumerate(theory_reqs):
+                if req['year'] == y:
+                    period_6_vars.append(theory_vars[(r_idx, d, 6)])
+            for r_idx, req in enumerate(lab_reqs):
+                if req['year'] == y:
+                    dur = req['duration']
+                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                    for start in valid_starts:
+                        if start == 6 or (start == 3 and dur == 3):  # Labs covering period 6
+                            period_6_vars.append(lab_vars[(r_idx, d, start)])
+            
+            # Check if period 7 has a class
+            period_7_vars = []
+            for r_idx, req in enumerate(theory_reqs):
+                if req['year'] == y:
+                    period_7_vars.append(theory_vars[(r_idx, d, 7)])
+            for r_idx, req in enumerate(lab_reqs):
+                if req['year'] == y:
+                    dur = req['duration']
+                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                    for start in valid_starts:
+                        covers_7 = False
+                        if start == 6: covers_7 = True  # All labs starting at 6 cover 7
+                        elif start == 7: covers_7 = True  # Labs starting at 7 cover 7
+                        if covers_7:
+                            period_7_vars.append(lab_vars[(r_idx, d, start)])
+            
+            # Check if period 8 has a class
+            period_8_vars = []
+            for r_idx, req in enumerate(theory_reqs):
+                if req['year'] == y:
+                    period_8_vars.append(theory_vars[(r_idx, d, 8)])
+            for r_idx, req in enumerate(lab_reqs):
+                if req['year'] == y:
+                    dur = req['duration']
+                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+                    for start in valid_starts:
+                        if start == 6 or start == 7:  # Labs covering period 8
+                            period_8_vars.append(lab_vars[(r_idx, d, start)])
+            
+            # Create boolean indicators for each period
+            period_6_occupied = model.NewBoolVar(f'P6_occupied_Y{y}_D{d}')
+            model.Add(sum(period_6_vars) >= 1).OnlyEnforceIf(period_6_occupied)
+            model.Add(sum(period_6_vars) == 0).OnlyEnforceIf(period_6_occupied.Not())
+            
+            period_7_occupied = model.NewBoolVar(f'P7_occupied_Y{y}_D{d}')
+            model.Add(sum(period_7_vars) >= 1).OnlyEnforceIf(period_7_occupied)
+            model.Add(sum(period_7_vars) == 0).OnlyEnforceIf(period_7_occupied.Not())
+            
+            period_8_occupied = model.NewBoolVar(f'P8_occupied_Y{y}_D{d}')
+            model.Add(sum(period_8_vars) >= 1).OnlyEnforceIf(period_8_occupied)
+            model.Add(sum(period_8_vars) == 0).OnlyEnforceIf(period_8_occupied.Not())
+            
+            # Constraint 1: If period 7 is occupied, period 6 MUST be occupied
+            # P7 => P6  (equivalent to: NOT P7 OR P6)
+            model.AddBoolOr([period_7_occupied.Not(), period_6_occupied])
+            
+            # Constraint 2: If period 8 is occupied, period 7 MUST be occupied
+            # P8 => P7  (equivalent to: NOT P8 OR P7)
+            model.AddBoolOr([period_8_occupied.Not(), period_7_occupied])
+            
+            # Note: Constraint 2 combined with Constraint 1 ensures:
+            # P8 => P7 => P6 (if 8 is filled, then 7 and 6 must also be filled)
+
+
+    # --- Objective: Preferences ---
+    pref_score = []
+    for r_idx, req in enumerate(theory_reqs):
+        prefs = req['prefs']
+        for d in DAYS:
+            for p in TEACHING_PERIODS:
+                # Check preference
+                score = 0
+                if d in prefs:
+                    if prefs[d] and int(prefs[d]) == p:
+                        score = 100 # High bonus for exact match
+                    else:
+                        score = 10 # Small bonus for day match
+                
+                if score > 0:
+                    pref_score.append(theory_vars[(r_idx, d, p)] * score)
+                    
+    model.Maximize(sum(pref_score))
+
+    # --- Solve ---
+    solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = 10.0
+    status = solver.Solve(model)
+
+    # --- Reconstruct Timetable ---
+    timetables = {y: {d: [None] * len(PERIODS) for d in DAYS} for y in years}
+    
+    if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+        print("✅ OR-Tools found a solution!")
+        
+        # Fill Theory
+        for r_idx, req in enumerate(theory_reqs):
+            for d in DAYS:
+                for p in TEACHING_PERIODS:
+                    if solver.Value(theory_vars[(r_idx, d, p)]):
+                        y = req['year']
+                        s = req['subject']
+                        timetables[y][d][p] = s
+
+        # Fill Labs
+        for r_idx, req in enumerate(lab_reqs):
+            for d in DAYS:
+                valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
+                for start in valid_starts:
+                    if solver.Value(lab_vars[(r_idx, d, start)]):
+                        y = req['year']
+                        s = req['subject']
+                        dur = req['duration']
+                        label = f"{s} - Lab"
+                        
+                        periods = []
+                        if start == 0: periods = [0, 1] if dur==2 else [0, 1, 3]
+                        elif start == 3: periods = [3, 4] if dur==2 else [3, 4, 6]
+                        elif start == 6: periods = [6, 7] if dur==2 else [6, 7, 8]
+                        elif start == 7: periods = [7, 8]
+                        
+                        for p in periods:
+                            timetables[y][d][p] = label
+
+        # Fill empty slots with Tutorial
+        for y in years:
+            for d in DAYS:
+                for p in TEACHING_PERIODS:
+                    if timetables[y][d][p] is None:
+                        timetables[y][d][p] = "Tutorial"
+
+    else:
+        print("❌ OR-Tools FAILED to find a solution. Constraints might be too tight.")
+    
+    return timetables, []

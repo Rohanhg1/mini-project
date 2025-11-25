@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSE – Seating Arrangement Generator</title>
+  <title>Seating Arrangement Generator</title>
   <style>
     body {
       margin: 0;
@@ -20,9 +21,17 @@
     }
 
     @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
 
     .container-card {
@@ -46,7 +55,8 @@
       font-weight: 600;
     }
 
-    input[type="number"], input[type="file"] {
+    input[type="number"],
+    input[type="file"] {
       width: 80%;
       padding: 10px;
       border-radius: 8px;
@@ -93,9 +103,10 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container-card">
-    <h1>CSE – Seating Arrangement Generator</h1>
+    <h1>Seating Arrangement Generator</h1>
 
     <form method="POST" enctype="multipart/form-data" id="mainForm">
       {% csrf_token %}
@@ -113,7 +124,7 @@
       <div id="step2" class="hidden">
         <div id="pdfInputs" class="pdf-inputs"></div>
 
-        <label for="num_classes">Enter Number of Classes per Semester:</label>
+        <label for="num_classes">Enter Number of Classes :</label>
         <input type="number" id="num_classes" name="num_classes" min="1" required>
 
         <label for="benches_per_class">Enter Total Benches in Each Class:</label>
@@ -162,4 +173,5 @@
     }
   </script>
 </body>
+
 </html>

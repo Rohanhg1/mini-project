@@ -62,9 +62,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>Bench</th>
-                    {% for i in students_per_bench|make_list %}
-                        <th>Student {{ forloop.counter }}</th>
+                    <th>Bench number</th>
+                    {% for header in headers|slice:"1:" %}
+                        <th>{{ header }}</th>
                     {% endfor %}
                 </tr>
             </thead>

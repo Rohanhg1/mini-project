@@ -22,10 +22,11 @@ class TeacherForm(forms.Form):
     
     teacher_name = forms.CharField(max_length=100, required=False)
     years_handling = forms.MultipleChoiceField(
-        choices=[('1', '3rd Sem'), ('2', '5th/7th Sem'), ('3', '7th/8th Sem')],
+        choices=[('1', '3rd/4th Sem'), ('2', '5th/7th Sem'), ('3', '7th/8th Sem')],
         widget=forms.CheckboxSelectMultiple,
         required=False
     )
+
 
     # Semester 1 (3rd)
     subject_y1 = forms.CharField(required=False)
@@ -53,4 +54,7 @@ class TeacherForm(forms.Form):
     day_time_prefs_y3 = forms.CharField(required=False, widget=forms.HiddenInput())
 
 class SeatingForm(forms.Form):
-    pdf_file = forms.FileField()
+    num_sems = forms.IntegerField(label="Number of Semesters", min_value=1, initial=2)
+    num_classes = forms.IntegerField(label="Total Classrooms", min_value=1)
+    benches_per_class = forms.IntegerField(label="Benches per Classroom", min_value=1)
+    students_per_bench = forms.IntegerField(label="Students per Bench", min_value=1, max_value=3, initial=2)
