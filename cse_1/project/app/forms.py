@@ -22,7 +22,7 @@ class TeacherForm(forms.Form):
     
     teacher_name = forms.CharField(max_length=100, required=False)
     years_handling = forms.MultipleChoiceField(
-        choices=[('1', '3rd/4th Sem'), ('2', '5th/7th Sem'), ('3', '7th/8th Sem')],
+        choices=[('1', '3rd/4th Sem'), ('2', '5th/6th Sem'), ('3', '7th/8th Sem')],
         widget=forms.CheckboxSelectMultiple,
         required=False
     )

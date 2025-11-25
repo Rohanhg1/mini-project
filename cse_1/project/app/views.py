@@ -403,7 +403,7 @@ def timetable_teachers(request):
                     
                     # DEBUG: Print what we received
                     if has_pref or day_time_prefs:
-                        print(f"\n🔍 DEBUG: Preference data for {name} - Year 1:")
+                        print(f"\n[DEBUG] Preference data for {name} - Year 1:")
                         print(f"   has_preference_y1: {has_pref}")
                         print(f"   day_time_prefs_y1 JSON: {day_time_json}")
                         print(f"   Parsed preferences: {day_time_prefs}")
@@ -513,7 +513,15 @@ def teacher_timetable(request, teacher_name):
         for day, slots in days_dict.items():
             teacher_slots = []
             for slot in slots:
-                if slot and any(subject in slot for subject in teacher_subjects[teacher_name]):
+                # Exact match check to avoid substring issues (e.g. "Math" in "Advanced Math")
+                is_match = False
+                if slot:
+                    for subject in teacher_subjects[teacher_name]:
+                        if slot == subject or slot == f"{subject} - Lab":
+                            is_match = True
+                            break
+                
+                if is_match:
                     teacher_slots.append(slot)
                 else:
                     teacher_slots.append(None)
@@ -670,7 +678,15 @@ def download_teacher_timetable_pdf(request, teacher_name):
         for day, slots in days_dict.items():
             teacher_slots = []
             for slot in slots:
-                if slot and any(subject in slot for subject in teacher_subjects[teacher_name]):
+                # Exact match check to avoid substring issues
+                is_match = False
+                if slot:
+                    for subject in teacher_subjects[teacher_name]:
+                        if slot == subject or slot == f"{subject} - Lab":
+                            is_match = True
+                            break
+                
+                if is_match:
                     teacher_slots.append(slot)
                 else:
                     teacher_slots.append(None)
@@ -861,8 +877,15 @@ def allocate_timetable_with_ga(entries_input):
 
     # C2. Subject Hours (Lab) - Exactly one slot per lab requirement
     for r_idx, req in enumerate(lab_reqs):
-        valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
-        model.Add(sum(lab_vars[(r_idx, d, p)] for d in DAYS for p in valid_starts) == 1)
+        dur = req['duration']
+        valid_starts = []
+        if dur == 2:
+            valid_starts = [0, 3, 6, 7]
+        elif dur == 3:
+            valid_starts = [0, 3, 6]
+            
+        if valid_starts:
+            model.Add(sum(lab_vars[(r_idx, d, p)] for d in DAYS for p in valid_starts) == 1)
 
     # C3. Single Class per Year/Day/Period
     for y in years:
@@ -943,6 +966,24 @@ def allocate_timetable_with_ga(entries_input):
             # At most 1 theory class for this subject on this day
             model.Add(sum(day_vars) <= 1)
 
+    # C6b. Only ONE lab per day per year
+    # For each year and each day, at most one lab can be scheduled
+    for y in years:
+        for d in DAYS:
+            # Collect all lab variables for this year on this day
+            day_lab_vars = []
+            for r_idx, req in enumerate(lab_reqs):
+                if req['year'] == y:
+                    # Add all possible start times for this lab on this day
+                    valid_starts = [0, 3, 6, 7] if req['duration'] == 2 else [0, 3, 6]
+                    for start in valid_starts:
+                        day_lab_vars.append(lab_vars[(r_idx, d, start)])
+            
+            # Constraint: At most ONE lab on this day for this year
+            if day_lab_vars:  # Only add if there are lab variables
+                print(f"[DEBUG] C6b: Year {y} Day {d} - Enforcing max 1 lab")
+                model.Add(sum(day_lab_vars) <= 1)
+
     # C4. Teacher Availability & Rest Periods
     for t in teachers:
         for d in DAYS:
@@ -1006,44 +1047,38 @@ def allocate_timetable_with_ga(entries_input):
                 # Constraint: If any variable in rest_vars is True, then is_busy must be False
                 model.Add(sum(rest_vars) + is_busy <= 1)
 
-    # C7. Morning Periods Must Be Filled
-    # For every semester (year) on every working day, the first 3 periods MUST be filled
-    # First 3 periods = Period 0 (9:00-10:00), Period 1 (10:00-11:00), Period 3 (11:15-12:15)
-    # Note: Period 2 is Break, so we skip it
-    MORNING_PERIODS = [0, 1, 3]
+    # C7. Morning Periods Must Be Filled (DISABLED - Too Strict)
+    # This constraint required ALL morning periods to be filled on EVERY day,
+    # which requires at least 15 periods per semester (3 periods × 5 days).
+    # Users with fewer hours would get infeasible solutions.
+    # Commenting out to allow flexible timetable generation.
     
-    for y in years:
-        for d in DAYS:
-            for p in MORNING_PERIODS:
-                # At least one class must be scheduled in this morning period
-                active_vars = []
-                
-                # Collect all theory vars for this year/day/period
-                for r_idx, req in enumerate(theory_reqs):
-                    if req['year'] == y:
-                        active_vars.append(theory_vars[(r_idx, d, p)])
-                
-                # Collect all lab vars that COVER this period
-                for r_idx, req in enumerate(lab_reqs):
-                    if req['year'] == y:
-                        dur = req['duration']
-                        valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
-                        for start in valid_starts:
-                            covers_p = False
-                            if start == 0:
-                                if dur == 2: covers_p = (p in [0, 1])
-                                else: covers_p = (p in [0, 1, 3])
-                            elif start == 3:
-                                if dur == 2: covers_p = (p in [3, 4])
-                                else: covers_p = (p in [3, 4, 6])
-                            
-                            if covers_p:
-                                active_vars.append(lab_vars[(r_idx, d, start)])
-                
-                # Constraint: Morning period MUST have at least 1 class
-                model.Add(sum(active_vars) >= 1)
+    # MORNING_PERIODS = [0, 1, 3]
+    # for y in years:
+    #     for d in DAYS:
+    #         for p in MORNING_PERIODS:
+    #             active_vars = []
+    #             for r_idx, req in enumerate(theory_reqs):
+    #                 if req['year'] == y:
+    #                     active_vars.append(theory_vars[(r_idx, d, p)])
+    #             for r_idx, req in enumerate(lab_reqs):
+    #                 if req['year'] == y:
+    #                     dur = req['duration']
+    #                     valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+    #                     for start in valid_starts:
+    #                         covers_p = False
+    #                         if start == 0:
+    #                             if dur == 2: covers_p = (p in [0, 1])
+    #                             else: covers_p = (p in [0, 1, 3])
+    #                         elif start == 3:
+    #                             if dur == 2: covers_p = (p in [3, 4])
+    #                             else: covers_p = (p in [3, 4, 6])
+    #                         if covers_p:
+    #                             active_vars.append(lab_vars[(r_idx, d, start)])
+    #             model.Add(sum(active_vars) >= 1)
 
-    # C8. Afternoon Periods Must Be Filled in Order (Sequential)
+    # C8. Afternoon Periods Must Be Filled in Order (Sequential) - DISABLED
+    # This constraint was causing infeasibility.
     # Afternoon periods must be filled sequentially from period 6 onwards.
     # Afternoon periods: 6 (2:30-3:20), 7 (3:20-4:15), 8 (4:15-5:00)
     # Rules:
@@ -1051,95 +1086,156 @@ def allocate_timetable_with_ga(entries_input):
     #   - If period 8 is occupied, periods 6 AND 7 MUST also be occupied
     # This ensures patterns like: [P6], [P6,P7], [P6,P7,P8], or [empty]
     # NOT allowed: [P7], [P8], [P7,P8], [P6,P8]
-    AFTERNOON_PERIODS = [6, 7, 8]
+    # AFTERNOON_PERIODS = [6, 7, 8]
+    # 
+    # for y in years:
+    #     for d in DAYS:
+    #         # Check if period 6 has a class
+    #         period_6_vars = []
+    #         for r_idx, req in enumerate(theory_reqs):
+    #             if req['year'] == y:
+    #                 period_6_vars.append(theory_vars[(r_idx, d, 6)])
+    #         for r_idx, req in enumerate(lab_reqs):
+    #             if req['year'] == y:
+    #                 dur = req['duration']
+    #                 valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+    #                 for start in valid_starts:
+    #                     if start == 6 or (start == 3 and dur == 3):  # Labs covering period 6
+    #                         period_6_vars.append(lab_vars[(r_idx, d, start)])
+    #         
+    #         # Check if period 7 has a class
+    #         period_7_vars = []
+    #         for r_idx, req in enumerate(theory_reqs):
+    #             if req['year'] == y:
+    #                 period_7_vars.append(theory_vars[(r_idx, d, 7)])
+    #         for r_idx, req in enumerate(lab_reqs):
+    #             if req['year'] == y:
+    #                 dur = req['duration']
+    #                 valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+    #                 for start in valid_starts:
+    #                     covers_7 = False
+    #                     if start == 6: covers_7 = True  # All labs starting at 6 cover 7
+    #                     elif start == 7: covers_7 = True  # Labs starting at 7 cover 7
+    #                     if covers_7:
+    #                         period_7_vars.append(lab_vars[(r_idx, d, start)])
+    #         
+    #         # Check if period 8 has a class
+    #         period_8_vars = []
+    #         for r_idx, req in enumerate(theory_reqs):
+    #             if req['year'] == y:
+    #                 period_8_vars.append(theory_vars[(r_idx, d, 8)])
+    #         for r_idx, req in enumerate(lab_reqs):
+    #             if req['year'] == y:
+    #                 dur = req['duration']
+    #                 valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
+    #                 for start in valid_starts:
+    #                     if start == 6 or start == 7:  # Labs covering period 8
+    #                         period_8_vars.append(lab_vars[(r_idx, d, start)])
+    #         
+    #         # Create boolean indicators for each period
+    #         period_6_occupied = model.NewBoolVar(f'P6_occupied_Y{y}_D{d}')
+    #         model.Add(sum(period_6_vars) >= 1).OnlyEnforceIf(period_6_occupied)
+    #         model.Add(sum(period_6_vars) == 0).OnlyEnforceIf(period_6_occupied.Not())
+    #         
+    #         period_7_occupied = model.NewBoolVar(f'P7_occupied_Y{y}_D{d}')
+    #         model.Add(sum(period_7_vars) >= 1).OnlyEnforceIf(period_7_occupied)
+    #         model.Add(sum(period_7_vars) == 0).OnlyEnforceIf(period_7_occupied.Not())
+    #         
+    #         period_8_occupied = model.NewBoolVar(f'P8_occupied_Y{y}_D{d}')
+    #         model.Add(sum(period_8_vars) >= 1).OnlyEnforceIf(period_8_occupied)
+    #         model.Add(sum(period_8_vars) == 0).OnlyEnforceIf(period_8_occupied.Not())
+    #         
+    #         # Constraint 1: If period 7 is occupied, period 6 MUST be occupied
+    #         # P7 => P6  (equivalent to: NOT P7 OR P6)
+    #         model.AddBoolOr([period_7_occupied.Not(), period_6_occupied])
+    #         
+    #         # Constraint 2: If period 8 is occupied, period 7 MUST be occupied
+    #         # P8 => P7  (equivalent to: NOT P8 OR P7)
+    #         model.AddBoolOr([period_8_occupied.Not(), period_7_occupied])
+    #         
+    #         # Note: Constraint 2 combined with Constraint 1 ensures:
+    #         # P8 => P7 => P6 (if 8 is filled, then 7 and 6 must also be filled)
+
+
+    # --- Hard Constraints: User Preferences ---
+    # If a user specifies a preference, we enforce it as a HARD constraint.
     
-    for y in years:
-        for d in DAYS:
-            # Check if period 6 has a class
-            period_6_vars = []
-            for r_idx, req in enumerate(theory_reqs):
-                if req['year'] == y:
-                    period_6_vars.append(theory_vars[(r_idx, d, 6)])
-            for r_idx, req in enumerate(lab_reqs):
-                if req['year'] == y:
-                    dur = req['duration']
-                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
-                    for start in valid_starts:
-                        if start == 6 or (start == 3 and dur == 3):  # Labs covering period 6
-                            period_6_vars.append(lab_vars[(r_idx, d, start)])
-            
-            # Check if period 7 has a class
-            period_7_vars = []
-            for r_idx, req in enumerate(theory_reqs):
-                if req['year'] == y:
-                    period_7_vars.append(theory_vars[(r_idx, d, 7)])
-            for r_idx, req in enumerate(lab_reqs):
-                if req['year'] == y:
-                    dur = req['duration']
-                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
-                    for start in valid_starts:
-                        covers_7 = False
-                        if start == 6: covers_7 = True  # All labs starting at 6 cover 7
-                        elif start == 7: covers_7 = True  # Labs starting at 7 cover 7
-                        if covers_7:
-                            period_7_vars.append(lab_vars[(r_idx, d, start)])
-            
-            # Check if period 8 has a class
-            period_8_vars = []
-            for r_idx, req in enumerate(theory_reqs):
-                if req['year'] == y:
-                    period_8_vars.append(theory_vars[(r_idx, d, 8)])
-            for r_idx, req in enumerate(lab_reqs):
-                if req['year'] == y:
-                    dur = req['duration']
-                    valid_starts = [0, 3, 6, 7] if dur == 2 else [0, 3, 6]
-                    for start in valid_starts:
-                        if start == 6 or start == 7:  # Labs covering period 8
-                            period_8_vars.append(lab_vars[(r_idx, d, start)])
-            
-            # Create boolean indicators for each period
-            period_6_occupied = model.NewBoolVar(f'P6_occupied_Y{y}_D{d}')
-            model.Add(sum(period_6_vars) >= 1).OnlyEnforceIf(period_6_occupied)
-            model.Add(sum(period_6_vars) == 0).OnlyEnforceIf(period_6_occupied.Not())
-            
-            period_7_occupied = model.NewBoolVar(f'P7_occupied_Y{y}_D{d}')
-            model.Add(sum(period_7_vars) >= 1).OnlyEnforceIf(period_7_occupied)
-            model.Add(sum(period_7_vars) == 0).OnlyEnforceIf(period_7_occupied.Not())
-            
-            period_8_occupied = model.NewBoolVar(f'P8_occupied_Y{y}_D{d}')
-            model.Add(sum(period_8_vars) >= 1).OnlyEnforceIf(period_8_occupied)
-            model.Add(sum(period_8_vars) == 0).OnlyEnforceIf(period_8_occupied.Not())
-            
-            # Constraint 1: If period 7 is occupied, period 6 MUST be occupied
-            # P7 => P6  (equivalent to: NOT P7 OR P6)
-            model.AddBoolOr([period_7_occupied.Not(), period_6_occupied])
-            
-            # Constraint 2: If period 8 is occupied, period 7 MUST be occupied
-            # P8 => P7  (equivalent to: NOT P8 OR P7)
-            model.AddBoolOr([period_8_occupied.Not(), period_7_occupied])
-            
-            # Note: Constraint 2 combined with Constraint 1 ensures:
-            # P8 => P7 => P6 (if 8 is filled, then 7 and 6 must also be filled)
-
-
-    # --- Objective: Preferences ---
-    pref_score = []
+    # 1. Theory Preferences
     for r_idx, req in enumerate(theory_reqs):
         prefs = req['prefs']
-        for d in DAYS:
-            for p in TEACHING_PERIODS:
-                # Check preference
-                score = 0
-                if d in prefs:
-                    if prefs[d] and int(prefs[d]) == p:
-                        score = 100 # High bonus for exact match
-                    else:
-                        score = 10 # Small bonus for day match
-                
-                if score > 0:
-                    pref_score.append(theory_vars[(r_idx, d, p)] * score)
+        for d, p_str in prefs.items():
+            if d in DAYS:
+                if p_str:
+                    try:
+                        p = int(p_str)
+                        if p in TEACHING_PERIODS:
+                            # Force theory class to be at this specific day and period
+                            model.Add(theory_vars[(r_idx, d, p)] == 1)
+                    except ValueError:
+                        pass
+                else:
+                    # Day preference only (Any time on this day)
+                    # Force the class to be scheduled on this day (at any valid time)
+                    model.Add(sum(theory_vars[(r_idx, d, p)] for p in SCHEDULABLE_PERIOD_INDICES) == 1)
+
+    # 2. Lab Preferences
+    for r_idx, req in enumerate(lab_reqs):
+        prefs = req['prefs']
+        for d, p_str in prefs.items():
+            if d in DAYS:
+                if p_str:
+                    try:
+                        target_p = int(p_str)
+                        # Find which valid start period covers this target period
+                        dur = req['duration']
+                        valid_starts = []
+                        if dur == 2:
+                            valid_starts = [0, 3, 6, 7]
+                        elif dur == 3:
+                            valid_starts = [0, 3, 6]
+                        
+                        forced_start = None
+                        for start in valid_starts:
+                            covers_p = False
+                            if start == 0:
+                                if dur == 2: covers_p = (target_p in [0, 1])
+                                else: covers_p = (target_p in [0, 1, 3])
+                            elif start == 3:
+                                if dur == 2: covers_p = (target_p in [3, 4])
+                                else: covers_p = (target_p in [3, 4, 6])
+                            elif start == 6:
+                                if dur == 2: covers_p = (target_p in [6, 7])
+                                else: covers_p = (target_p in [6, 7, 8])
+                            elif start == 7:
+                                covers_p = (target_p in [7, 8])
+                            
+                            if covers_p:
+                                forced_start = start
+                                break
+                        
+                        if forced_start is not None:
+                            # Force lab to start at the calculated start period
+                            model.Add(lab_vars[(r_idx, d, forced_start)] == 1)
+                            
+                    except ValueError:
+                        pass
+                else:
+                    # Day preference only (Any time on this day)
+                    # Force the lab to be scheduled on this day
+                    valid_starts = []
+                    for p in SCHEDULABLE_PERIOD_INDICES:
+                        if (r_idx, d, p) in lab_vars:
+                            valid_starts.append(lab_vars[(r_idx, d, p)])
+                    if valid_starts:
+                        model.Add(sum(valid_starts) == 1)
+
+    # --- Objective: Maximize Compactness (Optional) ---
+    # Since preferences are now hard constraints, we can use the objective 
+    # to keep the timetable compact or just leave it empty for feasibility only.
+    # For now, we'll just maximize feasibility.
+    # model.Maximize(sum(pref_score)) # Removed soft preferences
                     
-    model.Maximize(sum(pref_score))
+    # model.Maximize(sum(pref_score)) # Removed soft preferences
 
     # --- Solve ---
     solver = cp_model.CpSolver()
@@ -1150,7 +1246,7 @@ def allocate_timetable_with_ga(entries_input):
     timetables = {y: {d: [None] * len(PERIODS) for d in DAYS} for y in years}
     
     if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
-        print("✅ OR-Tools found a solution!")
+        print("[SUCCESS] OR-Tools found a solution!")
         
         # Fill Theory
         for r_idx, req in enumerate(theory_reqs):
@@ -1189,6 +1285,6 @@ def allocate_timetable_with_ga(entries_input):
                         timetables[y][d][p] = "Tutorial"
 
     else:
-        print("❌ OR-Tools FAILED to find a solution. Constraints might be too tight.")
+        print("[FAILURE] OR-Tools FAILED to find a solution. Constraints might be too tight.")
     
     return timetables, []
